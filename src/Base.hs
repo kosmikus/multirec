@@ -17,9 +17,6 @@ infixr 7 :*:
 data Id :: * -> (* -> *) -> * -> * where
   Id :: Ix l xi => xi -> Id xi l ix
 
-getIx :: Id xi l ix -> l xi
-getIx (Id _) = ix
-
 unId :: Id xi l ix -> xi
 unId (Id x) = x
 
