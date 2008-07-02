@@ -15,13 +15,13 @@ infix  6 :::
 infixr 7 :*:
 
 data Id :: * -> (* -> *) -> * -> * where
-  Id :: Ix l xi => l xi -> xi -> Id xi l ix
+  Id :: Ix l xi => xi -> Id xi l ix
 
 getIx :: Id xi l ix -> l xi
-getIx (Id xi _) = xi
+getIx (Id _) = ix
 
 unId :: Id xi l ix -> xi
-unId (Id _ x) = x
+unId (Id x) = x
 
 data K a       (l :: * -> *) ix = K {unK :: a}
 data (f :+: g) (l :: * -> *) ix = L (f l ix) | R (g l ix)
@@ -42,3 +42,4 @@ type Str l ix = (PF l) l ix
 class Fam l => Ix l ix where
   from :: ix -> Str l ix
   to   :: Str l ix -> ix
+  ix   :: l ix

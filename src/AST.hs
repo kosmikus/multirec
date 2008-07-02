@@ -30,25 +30,28 @@ data AST :: * -> * where
 
 instance Fam AST where
   type PF AST = K Var   :*: Id Exp  ::: Decl  :+:    -- (:=)
-                 K Var               ::: Exp   :+:    -- Var
-                 K Var   :*: Id Exp  ::: Exp   :+:    -- Abs
-                 Id Exp  :*: Id Exp  ::: Exp   :+:    -- App
-                 Id Decl :*: Id Exp  ::: Exp          -- Let
+                K Var               ::: Exp   :+:    -- Var
+                K Var   :*: Id Exp  ::: Exp   :+:    -- Abs
+                Id Exp  :*: Id Exp  ::: Exp   :+:    -- App
+                Id Decl :*: Id Exp  ::: Exp          -- Let
 
 instance Ix AST Decl where
-  from (x := e)                   = L (Tag (K x :*: Id Exp e))
-  to (L (Tag (K x :*: Id Exp e))) = x := e
+  from (x := e)               = L (Tag (K x :*: Id e))
+  to (L (Tag (K x :*: Id e))) = x := e
+  ix                          = Decl
  
 instance Ix AST Exp where
-  from (Var x    ) = R(L     (Tag (K x                       )))
-  from (Abs x  e ) = R(R(L   (Tag (K x        :*: Id Exp e  ))))
-  from (App e1 e2) = R(R(R(L (Tag (Id Exp  e1 :*: Id Exp e2)))))
-  from (Let d  e ) = R(R(R(R (Tag (Id Decl d  :*: Id Exp e )))))
+  from (Var x    ) = R(L     (Tag (K x            )))
+  from (Abs x  e ) = R(R(L   (Tag (K x   :*: Id e ))))
+  from (App e1 e2) = R(R(R(L (Tag (Id e1 :*: Id e2)))))
+  from (Let d  e ) = R(R(R(R (Tag (Id d  :*: Id e )))))
 
-  to (R(L     (Tag (K x                       )))) = Var x
-  to (R(R(L   (Tag (K x        :*: Id Exp e)  )))) = Abs x  e
-  to (R(R(R(L (Tag (Id Exp  e1 :*: Id Exp e2)))))) = App e1 e2 
-  to (R(R(R(R (Tag (Id Decl d  :*: Id Exp e) ))))) = Let d  e
+  to (R(L     (Tag (K x              )))) = Var x
+  to (R(R(L   (Tag (K x   :*: Id e)  )))) = Abs x  e
+  to (R(R(R(L (Tag (Id e1 :*: Id e2)))))) = App e1 e2 
+  to (R(R(R(R (Tag (Id d  :*: Id e) ))))) = Let d  e
+
+  ix = Exp
 
 -------------------------------------------------------------------------------
 -- application: prepend an underscore to every variable in an abstract-syntax

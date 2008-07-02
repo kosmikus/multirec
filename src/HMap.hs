@@ -13,7 +13,7 @@ import Base
 class HMap f where
   hmap :: (forall ix. Ix l ix => l ix -> ix -> ix) -> f l ix -> f l ix
 
-instance HMap (Id xi) where hmap f (Id xi x) = Id xi (f xi x)
+instance HMap (Id xi) where hmap f (Id x) = Id (f ix x)
 
 instance HMap (K x)   where hmap _ (K x)  = K x
 
