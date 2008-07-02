@@ -57,7 +57,6 @@ instance Ix AST Exp where
 -- application: prepend an underscore to every variable in an abstract-syntax
 -- tree
 -------------------------------------------------------------------------------
-
 rename_ :: Ix AST ix => AST ix -> ix -> ix 
 rename_ Decl (x := e)  = ("_" ++ x) := (rename_ Exp e)
 rename_ Exp  (Var x)   = Var ("_" ++ x)
