@@ -41,7 +41,7 @@ data Zipper l ix where
 
 data CList l ixh ix where
   CNil  :: CList l ix ix
-  CCons :: D (PF l) l ixh ix -> CList l ix ix' -> CList l ixh ix' 
+  CCons :: Ix l ix => D (PF l) l ixh ix -> CList l ix ix' -> CList l ixh ix' 
 
 toZipper :: Ix l ix => ix -> Zipper l ix
 toZipper x = Zipper x CNil
@@ -57,9 +57,22 @@ down (Zipper (x::ix') ctxs)
 
 --up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
 --up (Zipper _ CNil) = Nothing
---up (Zipper (x::ixh) (CCons ctx ctxs)) = Just (plugIt x)--Just (Zipper (to (upf x ctx)) ctxs)
+--up (Zipper (x::ixh) (CCons (ctx::D (PF l) l ixh ix') ctxs)) = undefined --Just (plugIt x ctx ctxs)--Just (Zipper (to (upf x ctx)) ctxs)
 --  where
---    plugIt = flip Zipper ctxs . to . flip upf ctx
+--    --plugIt :: forall l ix ixh ix' . (Ix l ix',ZipFuns (PF l))
+--    --       => ixh -> D (PF l) l ixh ix'  -> CList l ix' ix -> Zipper l ix
+--    --plugIt = ((Zipper . to) . ) . upf
+--    test = upf x ctx :: Str l ix'
+--    test2 :: forall l ix' ix . (Ix l ix', ZipFuns (PF l)) => Str l ix' -> CList l ix' ix -> Zipper l ix
+--    test2 = Zipper . to
+
+rev f g x = g (f (x))
+
+o2 :: (a -> b -> c) -> (c -> d) -> (a -> b -> d)
+o2 f g x y = g (f x y) 
+
+o2' :: (a -> b) -> (b -> c -> d) -> (a -> c -> d)
+o2' f g x y = g (f x) y
 
 -- -----------------------------------------------------------------
 -- D operator
