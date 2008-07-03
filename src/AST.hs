@@ -78,24 +78,31 @@ rename = rename_ Exp
 -------------------------------------------------------------------------------
 
 test :: Exp
-test =  rename e
-  where
-    e = Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
+test =  rename expr
 
+-- an example expression
 
--------------------------------------------------------------------------------
--- Zipper test
--------------------------------------------------------------------------------
+expr :: Exp
 expr = Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
-zipper1 = toZipper expr :: Zipper AST Exp
-zipper2 = fromJust (down zipper1)
-zipper3 = fromJust (down zipper2)
+
+
+
+-------------------------------------------------------------------------------
+-- Zipper tests
+-------------------------------------------------------------------------------
+testZ0 :: Exp
+testZ0 = leave . update (f ix) . down' . down' . enter $ expr
+  where
+    f :: AST ix -> ix -> ix
+    f Exp = const (Var "r")
+    f _   = id
+
+zipper1 = enter expr :: Zipper AST Exp
+zipper2 = down' zipper1
+zipper3 = down' zipper2
 
 testZ = showZipper zipper1 >> showZipper zipper2 >> showZipper zipper3
 
 showZipper :: Zipper AST Exp -> IO ()
 showZipper z = putStrLn (applyZipper showAST z)
-
-
-
 

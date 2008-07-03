@@ -12,6 +12,7 @@
 module Zipper where
 
 import Control.Monad
+import Data.Maybe
 
 import Base
 
@@ -44,39 +45,42 @@ data CList l ixh ix where
   CNil  :: CList l ix ix
   CCons :: Ix l ix => D (PF l) l ixh ix -> CList l ix ix' -> CList l ixh ix' 
 
-toZipper :: Ix l ix => ix -> Zipper l ix
-toZipper x = Zipper x CNil
+-- renamed toZipper to ...
+enter :: Ix l ix => ix -> Zipper l ix
+enter x = Zipper x CNil
 
-fromFirstF :: (ZipFuns (PF l),Ix l ixh) => ixh -> Maybe (ExFirst (PF l) l ixh)
-fromFirstF = firstf . from
+-- leave merges everything together again, because we otherwise don't
+-- know what type to return ...
+leave :: (ZipFuns (PF l), Ix l ix) => Zipper l ix -> ix
+leave (Zipper x CNil) = x
+leave x               = leave (up' x)
 
-down :: forall l ix . (ZipFuns (PF l)) => Zipper l ix -> Maybe (Zipper l ix)
-down (Zipper (x::ix') ctxs)
-  = do
-    ExFirst ctx x' <- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
-    return (Zipper x' (CCons ctx ctxs))
+update :: (forall ix. Ix l ix => ix -> ix) -> Zipper l ix -> Zipper l ix
+update f (Zipper x ctx) = Zipper (f x) ctx
 
 applyZipper :: (forall ix . l ix -> ix -> a) -> Zipper l ix -> a
 applyZipper f (Zipper x _) = f ix x
 
---up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
---up (Zipper _ CNil) = Nothing
---up (Zipper (x::ixh) (CCons (ctx::D (PF l) l ixh ix') ctxs)) = undefined --Just (plugIt x ctx ctxs)--Just (Zipper (to (upf x ctx)) ctxs)
---  where
---    --plugIt :: forall l ix ixh ix' . (Ix l ix',ZipFuns (PF l))
---    --       => ixh -> D (PF l) l ixh ix'  -> CList l ix' ix -> Zipper l ix
---    --plugIt = ((Zipper . to) . ) . upf
---    test = upf x ctx :: Str l ix'
---    test2 :: forall l ix' ix . (Ix l ix', ZipFuns (PF l)) => Str l ix' -> CList l ix' ix -> Zipper l ix
---    test2 = Zipper . to
+fromFirstF :: (ZipFuns (PF l), Ix l ixh) => ixh -> Maybe (ExFirst (PF l) l ixh)
+fromFirstF = firstf . from
 
-rev f g x = g (f (x))
+down :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
+down (Zipper (x::ix') ctxs)
+  = do
+    ExFirst ctx x' <- firstf (from x) -- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
+    return (Zipper x' (CCons ctx ctxs))
 
-o2 :: (a -> b -> c) -> (c -> d) -> (a -> b -> d)
-o2 f g x y = g (f x y) 
+-- variant of down that cannot fail
+down' :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Zipper l ix
+down' z = maybe z id (down z)
 
-o2' :: (a -> b) -> (b -> c -> d) -> (a -> c -> d)
-o2' f g x y = g (f x) y
+up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
+up (Zipper _ CNil) = Nothing
+up (Zipper (x::ixh) (CCons ctx ctxs)) = Just (Zipper (to (upf x ctx)) ctxs)
+
+-- variant again
+up' :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Zipper l ix
+up' z = maybe z id (up z)
 
 -- -----------------------------------------------------------------
 -- D operator
@@ -134,7 +138,8 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
 
 instance ZipFuns (K a) where
   firstf (K _) = Nothing
-  upf ixh zeroval = undefined
+  upf ixh zeroval = undefined 
+
 
 instance ZipFuns (Id xi) where
   firstf (Id x) = Just (ExFirst Unit' x)
