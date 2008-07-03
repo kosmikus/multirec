@@ -7,8 +7,11 @@
 
 module AST where
 
+import Data.Maybe
+
 import Base
 import Compos
+import Zipper
 
 -------------------------------------------------------------------------------
 -- a system of mutually recursive types for representing abstract syntax
@@ -53,6 +56,10 @@ instance Ix AST Exp where
 
   ix = Exp
 
+showAST :: AST ix -> ix -> String
+showAST Exp x = show x
+showAST Decl x = show x
+
 -------------------------------------------------------------------------------
 -- application: prepend an underscore to every variable in an abstract-syntax
 -- tree
@@ -74,3 +81,21 @@ test :: Exp
 test =  rename e
   where
     e = Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
+
+
+-------------------------------------------------------------------------------
+-- Zipper test
+-------------------------------------------------------------------------------
+expr = Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
+zipper1 = toZipper expr :: Zipper AST Exp
+zipper2 = fromJust (down zipper1)
+zipper3 = fromJust (down zipper2)
+
+testZ = showZipper zipper1 >> showZipper zipper2 >> showZipper zipper3
+
+showZipper :: Zipper AST Exp -> IO ()
+showZipper z = putStrLn (applyZipper showAST z)
+
+
+
+

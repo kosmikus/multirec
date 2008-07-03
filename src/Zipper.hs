@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE EmptyDataDecls       #-}
 {-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE Rank2Types           #-}
 
 module Zipper where
 
@@ -55,6 +56,9 @@ down (Zipper (x::ix') ctxs)
     ExFirst ctx x' <- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
     return (Zipper x' (CCons ctx ctxs))
 
+applyZipper :: (forall ix . l ix -> ix -> a) -> Zipper l ix -> a
+applyZipper f (Zipper x _) = f ix x
+
 --up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
 --up (Zipper _ CNil) = Nothing
 --up (Zipper (x::ixh) (CCons (ctx::D (PF l) l ixh ix') ctxs)) = undefined --Just (plugIt x ctx ctxs)--Just (Zipper (to (upf x ctx)) ctxs)
@@ -83,8 +87,8 @@ class Diff (f ::  (* -> *) -> * -> * ) where
            -> *        -- type of surrounding tree
            -> *
 
-instance Diff Unit where
-  type D Unit = Zero'
+instance Diff (K a) where
+  type D (K a) = Zero'
 
 instance Diff (Id xi) where
   type D (Id xi) = Unit' xi
@@ -128,8 +132,8 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
   upf h (R' (Prod' ctx x)) = x         :*: upf h ctx
   
 
-instance ZipFuns Unit where
-  firstf (K ()) = Nothing
+instance ZipFuns (K a) where
+  firstf (K _) = Nothing
   upf ixh zeroval = undefined
 
 instance ZipFuns (Id xi) where
