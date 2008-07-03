@@ -40,7 +40,7 @@ data Zipper l ix where
   Zipper :: Ix l ixh => ixh -> (CList l ixh ix) -> Zipper l ix
 
 data CList l ixh ix where
-  CNil :: CList l ix ix
+  CNil  :: CList l ix ix
   CCons :: D (PF l) l ixh ix -> CList l ix ix' -> CList l ixh ix' 
 
 toZipper :: Ix l ix => ix -> Zipper l ix
@@ -54,6 +54,12 @@ down (Zipper (x::ix') ctxs)
   = do
     ExFirst ctx x' <- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
     return (Zipper x' (CCons ctx ctxs))
+
+--up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
+--up (Zipper _ CNil) = Nothing
+--up (Zipper (x::ixh) (CCons ctx ctxs)) = Just (plugIt x)--Just (Zipper (to (upf x ctx)) ctxs)
+--  where
+--    plugIt = flip Zipper ctxs . to . flip upf ctx
 
 -- -----------------------------------------------------------------
 -- D operator
@@ -86,7 +92,7 @@ data ExFirst f l ix = forall ixh . Ix l ixh => ExFirst (D f l ixh ix) ixh
 -- -----------------------------------------------------------------
 class ZipFuns (f :: (* -> *) -> * -> *) where
   firstf :: f l ix -> Maybe (ExFirst f l ix)
-  up     :: Ix l ixh => ixh -> D f l ixh ix -> f l ix
+  upf    :: Ix l ixh => ixh -> D f l ixh ix -> f l ix
   --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (ExFirst f l ix) (f l ix)
 
 instance ZipFuns f => ZipFuns (f ::: ixtag) where
@@ -94,7 +100,7 @@ instance ZipFuns f => ZipFuns (f ::: ixtag) where
    = do
      ExFirst ctx h <- firstf x
      return (ExFirst (Tag' ctx) h) 
-  up h (Tag' ctx) = Tag (up h ctx)
+  upf h (Tag' ctx) = Tag (upf h ctx)
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
   firstf (x :*: y)
@@ -105,17 +111,17 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
      do
      ExFirst ctx h <- firstf y
      return (ExFirst (R' (Prod' ctx x)) h)
-  up h (L' (Prod' ctx y)) = up h ctx :*: y
-  up h (R' (Prod' ctx x)) = x        :*: up h ctx
+  upf h (L' (Prod' ctx y)) = upf h ctx :*: y
+  upf h (R' (Prod' ctx x)) = x         :*: upf h ctx
   
 
 instance ZipFuns Unit where
   firstf (K ()) = Nothing
-  up ixh zeroval = undefined
+  upf ixh zeroval = undefined
 
 instance ZipFuns (Id xi) where
   firstf (Id x) = Just (ExFirst Unit' x)
-  up ixh Unit' = Id ixh
+  upf ixh Unit' = Id ixh
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
   firstf (L x)
@@ -126,7 +132,7 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
    = do
      ExFirst ctx h <- firstf x
      return (ExFirst (R' ctx) h)
-  up h (L' ctx) = L (up h ctx)
-  up h (R' ctx) = R (up h ctx)
+  upf h (L' ctx) = L (upf h ctx)
+  upf h (R' ctx) = R (upf h ctx)
 
 
