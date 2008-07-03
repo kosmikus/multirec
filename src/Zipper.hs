@@ -14,6 +14,9 @@ import Control.Monad
 
 import Base
 
+-- -----------------------------------------------------------------
+-- Representation types for contexts
+-- -----------------------------------------------------------------
 -- ixh : type of hole
 -- ix  : type of tree
 data Prod' df f (l :: * -> *) ixh ix = Prod' (df l ixh ix) (f l ix)
@@ -30,8 +33,9 @@ data Unit' xi (l :: * -> *) ixh ix where
 
 type Unit = K ()
 
-
-
+-- -----------------------------------------------------------------
+-- Zipper datatype and high-level functions
+-- -----------------------------------------------------------------
 data Zipper l ix where
   Zipper :: Ix l ixh => ixh -> (CList l ixh ix) -> Zipper l ix
 
@@ -51,6 +55,9 @@ down (Zipper (x::ix') ctxs)
     ExFirst ctx x' <- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
     return (Zipper x' (CCons ctx ctxs))
 
+-- -----------------------------------------------------------------
+-- D operator
+-- -----------------------------------------------------------------
 class Diff (f ::  (* -> *) -> * -> * ) where
   type D f :: (* -> *) -- family name
            -> *        -- type of the hole
@@ -74,9 +81,12 @@ instance Diff f => Diff (f ::: ixtag) where
 
 data ExFirst f l ix = forall ixh . Ix l ixh => ExFirst (D f l ixh ix) ixh
 
+-- -----------------------------------------------------------------
+-- Zipper generic functions
+-- -----------------------------------------------------------------
 class ZipFuns (f :: (* -> *) -> * -> *) where
   firstf :: f l ix -> Maybe (ExFirst f l ix)
-  up     :: Ix l ixh => ixh -> D f l ixh ix -> Maybe (f l ix)
+  up     :: Ix l ixh => ixh -> D f l ixh ix -> f l ix
   --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (ExFirst f l ix) (f l ix)
 
 instance ZipFuns f => ZipFuns (f ::: ixtag) where
@@ -84,7 +94,7 @@ instance ZipFuns f => ZipFuns (f ::: ixtag) where
    = do
      ExFirst ctx h <- firstf x
      return (ExFirst (Tag' ctx) h) 
-  up h (Tag' ctx) = liftM Tag (up h ctx)
+  up h (Tag' ctx) = Tag (up h ctx)
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
   firstf (x :*: y)
@@ -95,8 +105,8 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
      do
      ExFirst ctx h <- firstf y
      return (ExFirst (R' (Prod' ctx x)) h)
-  up h (L' (Prod' ctx y)) = liftM (:*:y) (up h ctx)
-  up h (R' (Prod' ctx x)) = liftM (x:*:) (up h ctx)
+  up h (L' (Prod' ctx y)) = up h ctx :*: y
+  up h (R' (Prod' ctx x)) = x        :*: up h ctx
   
 
 instance ZipFuns Unit where
@@ -105,7 +115,7 @@ instance ZipFuns Unit where
 
 instance ZipFuns (Id xi) where
   firstf (Id x) = Just (ExFirst Unit' x)
-  up ixh Unit' = Just (Id ixh)
+  up ixh Unit' = Id ixh
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
   firstf (L x)
@@ -116,7 +126,7 @@ instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
    = do
      ExFirst ctx h <- firstf x
      return (ExFirst (R' ctx) h)
-  up h (L' ctx) = liftM L (up h ctx)
-  up h (R' ctx) = liftM R (up h ctx)
+  up h (L' ctx) = L (up h ctx)
+  up h (R' ctx) = R (up h ctx)
 
 
