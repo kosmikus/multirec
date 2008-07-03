@@ -32,23 +32,24 @@ type Unit = K ()
 
 
 
-data Zipper lz ix where
-  Zipper :: Ix lz ixh => ixh -> (CList lz ixh ix) -> Zipper lz ix
+data Zipper l ix where
+  Zipper :: Ix l ixh => ixh -> (CList l ixh ix) -> Zipper l ix
 
-data CList lc ixh ix where
+data CList l ixh ix where
   CNil :: CList l ix ix
   CCons :: D (PF l) l ixh ix -> CList l ix ix' -> CList l ixh ix' 
 
 toZipper :: Ix l ix => ix -> Zipper l ix
 toZipper x = Zipper x CNil
 
--- The stuff below does not type. But I don't know why!
---
---down :: forall ll ix . (ZipFuns (PF ll)) => Zipper ll ix -> Maybe (Zipper ll ix)
---down (Zipper (x::ix') ctxs)
---  = do
---    ExFirst ctx x' <- firstf (from x::PF ll ll ix') --(from x::PF ll ll ix')
---    return (Zipper x' (CCons ctx ctxs))
+fromFirstF :: (ZipFuns (PF l),Ix l ixh) => ixh -> Maybe (ExFirst (PF l) l ixh)
+fromFirstF = firstf . from
+
+down :: forall l ix . (ZipFuns (PF l)) => Zipper l ix -> Maybe (Zipper l ix)
+down (Zipper (x::ix') ctxs)
+  = do
+    ExFirst ctx x' <- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
+    return (Zipper x' (CCons ctx ctxs))
 
 class Diff (f ::  (* -> *) -> * -> * ) where
   type D f :: (* -> *) -- family name
@@ -71,10 +72,10 @@ instance (Diff f, Diff g) => Diff (f :*: g) where
 instance Diff f => Diff (f ::: ixtag) where
   type D (f ::: ixtag) = Tag' ixtag (D f)
 
-data ExFirst f lx ix = forall ixh . Ix lx ixh => ExFirst (D f lx ixh ix) ixh
+data ExFirst f l ix = forall ixh . Ix l ixh => ExFirst (D f l ixh ix) ixh
 
 class ZipFuns (f :: (* -> *) -> * -> *) where
-  firstf :: f lm ix -> Maybe (ExFirst f lm ix)
+  firstf :: f l ix -> Maybe (ExFirst f l ix)
   up     :: Ix l ixh => ixh -> D f l ixh ix -> Maybe (f l ix)
   --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (ExFirst f l ix) (f l ix)
 
