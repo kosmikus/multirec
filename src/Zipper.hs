@@ -113,7 +113,7 @@ enter :: Zipper l ix => ix -> Loc l ix
 down  :: Loc l ix -> Maybe (Loc l ix)
 up    :: Loc l ix -> Maybe (Loc l ix)
 right :: Loc l ix -> Maybe (Loc l ix)
-on    :: (forall ix. l ix -> ix -> a) -> Loc l ix -> a
+on    :: (forall xi. l xi -> xi -> a) -> Loc l ix -> a
 leave :: Loc l ix -> ix
 
 enter x                  = Loc x Empty
