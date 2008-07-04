@@ -10,6 +10,7 @@
 module Zipper where
 
 import Control.Monad
+import Data.Maybe
 import Base
 import TEq
 import Void
@@ -94,11 +95,16 @@ castTag Refl f = f
 -------------------------------------------------------------------------------
 
 enter :: Zipper l ix => ix -> Loc l ix
-enter x = Loc x Empty
+down  :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
+up    :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
+leave :: Zipper l ix => Loc l ix -> ix
 
-down :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
-down (Loc x s) = first (\z c -> Loc z (Push c s)) (from x)
+enter x               = Loc x Empty
 
-up :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
+down (Loc x s)        = first (\z c -> Loc z (Push c s)) (from x)
+
 up (Loc x Empty)      = Nothing
 up (Loc x (Push c s)) = return (Loc (to (fill c x)) s)
+
+leave (Loc x Empty)   = x
+leave loc             = leave (fromJust (up loc))
