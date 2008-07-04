@@ -61,13 +61,10 @@ update f (Zipper x ctx) = Zipper (f x) ctx
 applyZipper :: (forall ix . l ix -> ix -> a) -> Zipper l ix -> a
 applyZipper f (Zipper x _) = f ix x
 
-fromFirstF :: (ZipFuns (PF l), Ix l ixh) => ixh -> Maybe (CtxOf (PF l) l ixh)
-fromFirstF = firstf . from
-
 down :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
 down (Zipper (x::ix') ctxs)
   = do
-    CtxOf ctx x' <- firstf (from x) -- (fromFirstF x::Maybe (CtxOf (PF l) l ix'))
+    CtxOf ctx x' <- firstf (from' x) :: Maybe (CtxOf (PF l) l ix')
     return (Zipper x' (CCons ctx ctxs))
 
 -- variant of down that cannot fail
@@ -76,12 +73,26 @@ down' z = maybe z id (down z)
 
 up :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
 up (Zipper _ CNil) = Nothing
-up (Zipper (x::ixh) (CCons ctx ctxs)) = Just (Zipper (to (upf x ctx)) ctxs)
-
+up (Zipper (x::ixh) (CCons ctx ctxs)) = Just (Zipper (to' (upf' x ctx)) ctxs)
+ 
 -- variant again
 up' :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Zipper l ix
 up' z = maybe z id (up z)
 
+-- ---------------------------
+-- Wrappers that use equality constraints
+--  -----------------------------
+from' :: forall l pf ix . (Ix l ix,PF l ~ pf) => ix -> pf l ix
+from' = from
+
+--firstf' ::  forall l ix ixh df f . ZipFuns f) => f l ix -> Maybe (CtxOf f l ix)
+
+upf' :: forall l ix ixh df f . (Ix l ixh,df ~ D f,ZipFuns f) => ixh -> df l ixh ix -> f l ix
+upf' = upf
+
+to'  :: forall l pf ix . (Ix l ix,PF l ~ pf) => pf l ix -> ix
+to' = to
+ 
 -- -----------------------------------------------------------------
 -- D operator
 -- -----------------------------------------------------------------

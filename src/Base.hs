@@ -37,7 +37,7 @@ class Fam l where
 
 type Str l ix = (PF l) l ix
 
-class Fam l => Ix l ix | ix -> l where
+class Fam l => Ix l ix where
   from :: ix -> Str l ix
   to   :: Str l ix -> ix
   ix   :: l ix
