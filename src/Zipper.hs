@@ -61,13 +61,13 @@ update f (Zipper x ctx) = Zipper (f x) ctx
 applyZipper :: (forall ix . l ix -> ix -> a) -> Zipper l ix -> a
 applyZipper f (Zipper x _) = f ix x
 
-fromFirstF :: (ZipFuns (PF l), Ix l ixh) => ixh -> Maybe (ExFirst (PF l) l ixh)
+fromFirstF :: (ZipFuns (PF l), Ix l ixh) => ixh -> Maybe (CtxOf (PF l) l ixh)
 fromFirstF = firstf . from
 
 down :: forall l ix . ZipFuns (PF l) => Zipper l ix -> Maybe (Zipper l ix)
 down (Zipper (x::ix') ctxs)
   = do
-    ExFirst ctx x' <- firstf (from x) -- (fromFirstF x::Maybe (ExFirst (PF l) l ix'))
+    CtxOf ctx x' <- firstf (from x) -- (fromFirstF x::Maybe (CtxOf (PF l) l ix'))
     return (Zipper x' (CCons ctx ctxs))
 
 -- variant of down that cannot fail
@@ -106,32 +106,28 @@ instance (Diff f, Diff g) => Diff (f :*: g) where
 instance Diff f => Diff (f ::: ixtag) where
   type D (f ::: ixtag) = Tag' ixtag (D f)
 
-data ExFirst f l ix = forall ixh . Ix l ixh => ExFirst (D f l ixh ix) ixh
+data CtxOf f l ix = forall ixh . Ix l ixh => CtxOf (D f l ixh ix) ixh
+
+mapCtxOf :: (forall ixh . D f l ixh ix -> D f' l ixh ix)
+           -> CtxOf f l ix -> CtxOf f' l ix
+mapCtxOf f (CtxOf ctx x) = CtxOf (f ctx) x
 
 -- -----------------------------------------------------------------
 -- Zipper generic functions
 -- -----------------------------------------------------------------
 class ZipFuns (f :: (* -> *) -> * -> *) where
-  firstf :: f l ix -> Maybe (ExFirst f l ix)
+  firstf :: f l ix -> Maybe (CtxOf f l ix)
   upf    :: Ix l ixh => ixh -> D f l ixh ix -> f l ix
-  --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (ExFirst f l ix) (f l ix)
+  --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (CtxOf f l ix) (f l ix)
 
 instance ZipFuns f => ZipFuns (f ::: ixtag) where
-  firstf (Tag x)
-   = do
-     ExFirst ctx h <- firstf x
-     return (ExFirst (Tag' ctx) h) 
+  firstf (Tag x) = liftM (mapCtxOf Tag') (firstf x)
   upf h (Tag' ctx) = Tag (upf h ctx)
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
-  firstf (x :*: y)
-   = do
-     ExFirst ctx h <- firstf x
-     return (ExFirst (L' (Prod' ctx y)) h)
-     `mplus`
-     do
-     ExFirst ctx h <- firstf y
-     return (ExFirst (R' (Prod' ctx x)) h)
+  firstf (x :*: y) = liftM (mapCtxOf (L' . (`Prod'` y))) (firstf x)
+                     `mplus`
+                     liftM (mapCtxOf (R' . (`Prod'` x))) (firstf y)
   upf h (L' (Prod' ctx y)) = upf h ctx :*: y
   upf h (R' (Prod' ctx x)) = x         :*: upf h ctx
   
@@ -142,18 +138,12 @@ instance ZipFuns (K a) where
 
 
 instance ZipFuns (Id xi) where
-  firstf (Id x) = Just (ExFirst Unit' x)
+  firstf (Id x) = Just (CtxOf Unit' x)
   upf ixh Unit' = Id ixh
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
-  firstf (L x)
-   = do
-     ExFirst ctx h <- firstf x
-     return (ExFirst (L' ctx) h)
-  firstf (R x)
-   = do
-     ExFirst ctx h <- firstf x
-     return (ExFirst (R' ctx) h)
+  firstf (L x) = liftM (mapCtxOf L') (firstf x)
+  firstf (R x) = liftM (mapCtxOf R') (firstf x)
   upf h (L' ctx) = L (upf h ctx)
   upf h (R' ctx) = R (upf h ctx)
 
