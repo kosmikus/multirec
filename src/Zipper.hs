@@ -20,7 +20,7 @@ import Void
 -------------------------------------------------------------------------------
 
 data Loc :: (* -> *) -> * -> * where
-  Loc :: Ix l ix => ix -> Stack l a ix -> Loc l a
+  Loc :: (Ix l ix, Zipper_ (PF l)) => ix -> Stack l a ix -> Loc l a
 
 data Stack :: (* -> *) -> * -> * -> * where
   Empty :: Stack l a a
@@ -110,16 +110,20 @@ castTag Refl f = f
 -------------------------------------------------------------------------------
 
 enter :: Zipper l ix => ix -> Loc l ix
-down  :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
-up    :: Zipper l ix => Loc l ix -> Maybe (Loc l ix)
-leave :: Zipper l ix => Loc l ix -> ix
+down  :: Loc l ix -> Maybe (Loc l ix)
+up    :: Loc l ix -> Maybe (Loc l ix)
+right :: Loc l ix -> Maybe (Loc l ix)
+leave :: Loc l ix -> ix
 
-enter x               = Loc x Empty
+enter x                  = Loc x Empty
 
-down (Loc x s)        = first (\z c -> Loc z (Push c s)) (from x)
+down (Loc x s)           = first (\z c -> Loc z (Push c s)) (from x)
 
-up (Loc x Empty)      = Nothing
-up (Loc x (Push c s)) = return (Loc (to (fill c x)) s)
+up (Loc x Empty)         = Nothing
+up (Loc x (Push c s))    = return (Loc (to (fill c x)) s)
 
-leave (Loc x Empty)   = x
-leave loc             = leave (fromJust (up loc))
+right (Loc x Empty)      = Nothing
+right (Loc x (Push c s)) = next (\z c' -> Loc z (Push c' s)) c x
+
+leave (Loc x Empty)      = x
+leave loc                = leave (fromJust (up loc))
