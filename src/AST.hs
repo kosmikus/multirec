@@ -7,6 +7,7 @@
 module AST where
 
 import Base
+import ShowFam
 
 -------------------------------------------------------------------------------
 -- a system of mutually recursive types for representing abstract syntax
@@ -50,3 +51,11 @@ instance Ix AST Exp where
   to (R(R(L   (Tag (K x   :*: Id e)  )))) = Abs x  e
   to (R(R(R(L (Tag (Id e1 :*: Id e2)))))) = App e1 e2 
   to (R(R(R(R (Tag (Id d  :*: Id e) ))))) = Let d  e
+
+-------------------------------------------------------------------------------
+-- pretty printing
+-------------------------------------------------------------------------------
+
+instance ShowFam AST where
+  showFam Decl = show
+  showFam Exp  = show

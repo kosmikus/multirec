@@ -7,6 +7,7 @@
 module ZigZag where
 
 import Base
+import ShowFam
 
 -------------------------------------------------------------------------------
 -- going back and forth until we're zapped
@@ -41,3 +42,11 @@ instance Ix ZigZag Zag where
 
   to (R (L (Tag (Id z)))) = Zag z
   to (R (R (Tag (K ())))) = Zap
+
+-------------------------------------------------------------------------------
+-- pretty printing
+-------------------------------------------------------------------------------
+
+instance ShowFam ZigZag where
+  showFam ZZig = show
+  showFam ZZag = show

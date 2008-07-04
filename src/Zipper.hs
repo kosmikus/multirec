@@ -9,6 +9,8 @@
 
 module Zipper where
 
+import Prelude hiding (last)
+
 import Control.Monad
 import Data.Maybe
 import Base
@@ -45,53 +47,67 @@ data instance Ctx (f ::: xi) l ix b = CTag (ix :=: xi) (Ctx f l ix b)
 -------------------------------------------------------------------------------
 
 class Zipper_ f where
-  first :: (forall b. Ix l b => b -> Ctx f l ix b -> a)
-        -> f l ix -> Maybe a
-  fill  :: Ix l b => Ctx f l ix b -> b -> f l ix
-  next  :: (forall b. Ix l b => b -> Ctx f l ix b -> a)
-        -> Ix l b => Ctx f l ix b -> b -> Maybe a
+  fill        :: Ix l b => Ctx f l ix b -> b -> f l ix
+  first, last :: (forall b. Ix l b => b -> Ctx f l ix b -> a)
+              -> f l ix -> Maybe a
+  next, prev  :: (forall b. Ix l b => b -> Ctx f l ix b -> a)
+              -> Ix l b => Ctx f l ix b -> b -> Maybe a
 
 class (Ix l ix, Zipper_ (PF l)) => Zipper l ix
 
 instance Zipper_ (Id xi) where
-  first f (Id x)     = return (f x (CId Refl))
-  fill (CId prf) x   = castId prf Id x
-  next f (CId prf) x = Nothing 
+  fill    (CId prf) x = castId prf Id x
+  first f (Id x)      = return (f x (CId Refl))
+  last  f (Id x)      = return (f x (CId Refl))
+  next  f (CId prf) x = Nothing 
+  prev  f (CId prf) x = Nothing 
 
 instance Zipper_ (K a) where
-  first f (K a)      = Nothing
-  fill (CK void) x   = refute void
-  next f (CK void) x = Nothing
+  fill    (CK void) x = refute void
+  first f (K a)       = Nothing
+  last  f (K a)       = Nothing
+  next  f (CK void) x = Nothing
+  prev  f (CK void) x = Nothing
 
 instance (Zipper_ f, Zipper_ g) => Zipper_ (f :+: g) where
-  first f (L x)             = first (\z -> f z . CSum . Left ) x
-  first f (R y)             = first (\z -> f z . CSum . Right) y
-  
-  fill (CSum (Left  c)) x   = L (fill c x)
-  fill (CSum (Right c)) y   = R (fill c y)
-
-  next f (CSum (Left  c)) x = next (\z -> f z . CSum . Left ) c x
-  next f (CSum (Right c)) y = next (\z -> f z . CSum . Right) c y
+  fill    (CSum (Left  c)) x = L (fill c x)
+  fill    (CSum (Right c)) y = R (fill c y)
+  first f (L x)              = first (\z -> f z . CSum . Left )   x
+  first f (R y)              = first (\z -> f z . CSum . Right)   y
+  last  f (L x)              = last  (\z -> f z . CSum . Left )   x
+  last  f (R y)              = last  (\z -> f z . CSum . Right)   y
+  next  f (CSum (Left  c)) x = next  (\z -> f z . CSum . Left ) c x
+  next  f (CSum (Right c)) y = next  (\z -> f z . CSum . Right) c y
+  prev  f (CSum (Left  c)) x = prev  (\z -> f z . CSum . Left ) c x
+  prev  f (CSum (Right c)) y = prev  (\z -> f z . CSum . Right) c y
 
 instance (Zipper_ f, Zipper_ g) => Zipper_ (f :*: g) where
-  first f (x :*: y) =
-    first (\z c -> f z (CProd (Left  (c, y)))) x `mplus`
-    first (\z c -> f z (CProd (Right (x, c)))) y
+  fill    (CProd (Left  (c, y))) x = fill c x :*: y
+  fill    (CProd (Right (x, c))) y = x :*: fill c y
+  first f (x :*: y)                =
+                first (\z c -> f z (CProd (Left  (c         , y))))   x `mplus`
+                first (\z c -> f z (CProd (Right (x         , c))))   y
+  last  f (x :*: y)                =
+                last  (\z c -> f z (CProd (Right (x        , c ))))   y `mplus`
+                last  (\z c -> f z (CProd (Left  (c        , y ))))   x
+  next  f (CProd (Left  (c, y))) x =
+                next  (\z c' -> f z (CProd (Left  (c'      , y )))) c x `mplus`
+                first (\z c' -> f z (CProd (Right (fill c x, c'))))   y
+  next  f (CProd (Right (x, c))) y =
+                next  (\z c' -> f z (CProd (Right (x       , c')))) c y
+  prev  f (CProd (Left  (c, y))) x =
+                prev  (\z c' -> f z (CProd (Left  (c'      , y )))) c x
 
-  fill (CProd (Left  (c, y))) x = fill c x :*: y
-  fill (CProd (Right (x, c))) y = x :*: fill c y
-
-  next f (CProd (Left  (c, y))) x =
-    next (\z c' -> f z (CProd (Left (c', y)))) c x `mplus`
-    first (\z c' -> f z (CProd (Right (fill c x, c')))) y
-
-  next f (CProd (Right (x, c))) y =
-    next (\z c' -> f z (CProd (Right (x, c')))) c y
+  prev  f (CProd (Right (x, c))) y =
+                prev  (\z c' -> f z (CProd (Right (x       , c')))) c y `mplus`
+                last  (\z c' -> f z (CProd (Left  (c', fill c y))))   x
 
 instance Zipper_ f => Zipper_ (f ::: xi) where
-  first f (Tag x)       = first (\z -> f z . CTag Refl) x
-  fill (CTag prf c) x   = castTag prf Tag (fill c x)
-  next f (CTag prf c) x = next (\z -> f z . CTag prf) c x
+  fill    (CTag prf c) x = castTag prf Tag (fill c x)
+  first f (Tag x)        = first (\z -> f z . CTag Refl)   x
+  last  f (Tag x)        = last  (\z -> f z . CTag Refl)   x
+  next  f (CTag prf c) x = next  (\z -> f z . CTag prf)  c x
+  prev  f (CTag prf c) x = prev  (\z -> f z . CTag prf)  c x
 
 -- helpers
 castId  :: (b :=: xi)
@@ -109,24 +125,23 @@ castTag Refl f = f
 -- interface
 -------------------------------------------------------------------------------
 
-enter :: Zipper l ix => ix -> Loc l ix
-down  :: Loc l ix -> Maybe (Loc l ix)
-up    :: Loc l ix -> Maybe (Loc l ix)
-right :: Loc l ix -> Maybe (Loc l ix)
-on    :: (forall xi. l xi -> xi -> a) -> Loc l ix -> a
-leave :: Loc l ix -> ix
+enter           :: Zipper l ix => ix -> Loc l ix
+down, down', up :: Loc l ix -> Maybe (Loc l ix)
+right, left     :: Loc l ix -> Maybe (Loc l ix)
+leave           :: Loc l ix -> ix
+on              :: (forall xi. l xi -> xi -> a)  -> Loc l ix -> a
+update          :: (forall xi. l xi -> xi -> xi) -> Loc l ix -> Loc l ix
 
-enter x                  = Loc x Empty
-
-down (Loc x s)           = first (\z c -> Loc z (Push c s)) (from x)
-
-up (Loc x Empty)         = Nothing
-up (Loc x (Push c s))    = return (Loc (to (fill c x)) s)
-
-right (Loc x Empty)      = Nothing
-right (Loc x (Push c s)) = next (\z c' -> Loc z (Push c' s)) c x
-
-on f (Loc x _)           = f ix x
-
-leave (Loc x Empty)      = x
-leave loc                = leave (fromJust (up loc))
+enter x                     = Loc x Empty
+down     (Loc x s         ) = first (\z c  -> Loc z (Push c  s))   (from x)
+down'    (Loc x s         ) = last  (\z c  -> Loc z (Push c  s))   (from x)
+up       (Loc x Empty     ) = Nothing
+up       (Loc x (Push c s)) = return (Loc (to (fill c x)) s)
+right    (Loc x Empty     ) = Nothing
+right    (Loc x (Push c s)) = next  (\z c' -> Loc z (Push c' s)) c x
+left     (Loc x Empty     ) = Nothing
+left     (Loc x (Push c s)) = prev  (\z c' -> Loc z (Push c' s)) c x
+leave    (Loc x Empty)      = x
+leave    loc                = leave (fromJust (up loc))
+on f     (Loc x _         ) =      f ix x
+update f (Loc x s         ) = Loc (f ix x) s

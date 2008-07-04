@@ -3,36 +3,53 @@
 
 module ZipperTest where
 
+import Prelude hiding (exp)
+
+import Data.Maybe
+
+import AST
 import Base
+import ShowFam
 import ZigZag
 import Zipper
-
--------------------------------------------------------------------------------
--- enable Zipper functionality for Zig and Zag
--------------------------------------------------------------------------------
-
-instance Zipper ZigZag Zig
-instance Zipper ZigZag Zag
 
 -------------------------------------------------------------------------------
 -- traversing the left spine of a Zig and printing all subtrees encountered
 -------------------------------------------------------------------------------
 
-print' :: ZigZag ix -> ix -> IO ()
-print' ZZig = print
-print' ZZag = print
-
-printLeftSpineOf :: Zig -> IO ()
-printLeftSpineOf =  go . enter
+printLeftSpine :: (ShowFam l, Zipper l ix) => l ix -> ix -> IO ()
+printLeftSpine ix = go ix . enter
   where
-    go :: Loc ZigZag Zig -> IO ()
-    go loc = print' `on` loc >> maybe (return ()) go (down loc)
+    go :: ShowFam l => l ix -> Loc l ix -> IO ()
+    go ix loc = printFam `on` loc >> maybe (return ()) (go ix) (down loc)
 
 -------------------------------------------------------------------------------
 -- test
 -------------------------------------------------------------------------------
 
-test :: IO ()
-test =  printLeftSpineOf z
+instance Zipper ZigZag Zig
+
+zig :: Zig
+zig = Zig (Zag (Zig Zap))
+
+test1 :: IO ()
+test1 =  printLeftSpine ZZig zig
+
+instance Zipper AST Exp
+
+locExp :: Loc AST Exp
+locExp = enter $ Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
+
+test2 :: IO ()
+test2 =  printLeftSpine Exp (leave locExp)
+
+test3 :: IO ()
+test3 =  printFam `on` fromJust (walk locExp) 
   where
-    z = Zig (Zag (Zig Zap))
+    walk e = down e >>= right >>= left >>= down >>= up >>= down
+
+test4 :: Exp
+test4 =  leave . update upd . fromJust $ down' locExp >>= down'
+  where
+    upd :: AST ix -> ix -> ix
+    upd Exp _ = Var "z"
