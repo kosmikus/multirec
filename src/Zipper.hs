@@ -98,8 +98,13 @@ type instance D (f ::: ixtag) = Tag' ixtag (D f)
 data CtxOf f l ix = forall ixh . Ix l ixh => CtxOf (D f l ixh ix) ixh
 
 mapCtxOf :: (forall ixh . D f l ixh ix -> D f' l ixh ix)
-           -> CtxOf f l ix -> CtxOf f' l ix
+         -> CtxOf f l ix -> CtxOf f' l ix
 mapCtxOf f (CtxOf ctx x) = CtxOf (f ctx) x
+
+-- variant for mapping over a Maybe
+mapMbCtxOf :: (forall ixh . D f l ixh ix -> D f' l ixh ix)
+           -> Maybe (CtxOf f l ix) -> Maybe (CtxOf f' l ix)
+mapMbCtxOf = liftM . mapCtxOf
 
 -- -----------------------------------------------------------------
 -- Zipper generic functions
@@ -110,29 +115,26 @@ class ZipFuns (f :: (* -> *) -> * -> *) where
   --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (CtxOf f l ix) (f l ix)
 
 instance ZipFuns f => ZipFuns (f ::: ixtag) where
-  firstf (Tag x) = liftM (mapCtxOf Tag') (firstf x)
+  firstf (Tag x)   = mapMbCtxOf Tag' (firstf x)
   upf h (Tag' ctx) = Tag (upf h ctx)
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
-  firstf (x :*: y) = liftM (mapCtxOf (L' . (`Prod'` y))) (firstf x)
-                     `mplus`
-                     liftM (mapCtxOf (R' . (`Prod'` x))) (firstf y)
+  firstf (x :*: y) = mapMbCtxOf (L' . (`Prod'` y)) (firstf x) `mplus`
+                     mapMbCtxOf (R' . (`Prod'` x)) (firstf y)
   upf h (L' (Prod' ctx y)) = upf h ctx :*: y
   upf h (R' (Prod' ctx x)) = x         :*: upf h ctx
-  
 
 instance ZipFuns (K a) where
   firstf (K _) = Nothing
   upf ixh zeroval = undefined 
-
 
 instance ZipFuns (Id xi) where
   firstf (Id x) = Just (CtxOf Unit' x)
   upf ixh Unit' = Id ixh
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
-  firstf (L x) = liftM (mapCtxOf L') (firstf x)
-  firstf (R x) = liftM (mapCtxOf R') (firstf x)
+  firstf (L x) = mapMbCtxOf L' (firstf x)
+  firstf (R x) = mapMbCtxOf R' (firstf x)
   upf h (L' ctx) = L (upf h ctx)
   upf h (R' ctx) = R (upf h ctx)
 
