@@ -85,26 +85,15 @@ up' z = maybe z id (up z)
 -- -----------------------------------------------------------------
 -- D operator
 -- -----------------------------------------------------------------
-class Diff (f ::  (* -> *) -> * -> * ) where
-  type D f :: (* -> *) -- family name
-           -> *        -- type of the hole
-           -> *        -- type of surrounding tree
-           -> *
-
-instance Diff (K a) where
-  type D (K a) = Zero'
-
-instance Diff (Id xi) where
-  type D (Id xi) = Unit' xi
-
-instance (Diff f, Diff g) => Diff (f :+: g) where
-  type D (f :+: g) = D f `Sum'` D g
-
-instance (Diff f, Diff g) => Diff (f :*: g) where
-  type D (f :*: g) = Prod' (D f) g `Sum'` Prod' (D g) f
-
-instance Diff f => Diff (f ::: ixtag) where
-  type D (f ::: ixtag) = Tag' ixtag (D f)
+type family D f :: (* -> *) -- family name
+                -> *        -- type of the hole
+                -> *        -- type of surrounding tree
+                -> *
+type instance D (K a)         = Zero'
+type instance D (Id xi)       = Unit' xi
+type instance D (f :+: g)     = D f `Sum'` D g
+type instance D (f :*: g)     = Prod' (D f) g `Sum'` Prod' (D g) f
+type instance D (f ::: ixtag) = Tag' ixtag (D f)
 
 data CtxOf f l ix = forall ixh . Ix l ixh => CtxOf (D f l ixh ix) ixh
 
