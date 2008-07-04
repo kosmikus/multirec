@@ -26,7 +26,7 @@ printLeftSpineOf :: Zig -> IO ()
 printLeftSpineOf =  go . enter
   where
     go :: Loc ZigZag Zig -> IO ()
-    go loc@(Loc z _) = print' ix z >> maybe (return ()) go (down loc)
+    go loc = print' `on` loc >> maybe (return ()) go (down loc)
 
 -------------------------------------------------------------------------------
 -- test
