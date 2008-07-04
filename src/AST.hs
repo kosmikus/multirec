@@ -91,7 +91,7 @@ expr = Let ("id" := Abs "x" (Var "x")) (App (Var "id") (Var "y"))
 -- Zipper tests
 -------------------------------------------------------------------------------
 testZ0 :: Exp
-testZ0 = leave . update (f ix) . down' . down' . enter $ expr
+testZ0 = leave . update (f ix) . down' . down' $ (enter expr :: Zipper AST Exp)
   where
     f :: AST ix -> ix -> ix
     f Exp = const (Var "r")

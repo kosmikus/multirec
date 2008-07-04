@@ -21,17 +21,20 @@ import Base
 -- -----------------------------------------------------------------
 -- ixh : type of hole
 -- ix  : type of tree
-data Prod' df f (l :: * -> *) ixh ix = Prod' (df l ixh ix) (f l ix)
+data CProd df f (l :: * -> *) ixh ix = CProd (df l ixh ix) (f l ix)
 
-data Sum' df dg (l :: * -> *) ixh ix = L' (df l ixh ix) | R' (dg l ixh ix)
+data CSum df dg (l :: * -> *) ixh ix = CL (df l ixh ix) | CR (dg l ixh ix)
 
-data Zero' (l :: * -> *) ixh ix
+data CZero (l :: * -> *) ixh ix
 
-data Tag' ixtag df (l :: * -> *) ixh ix where
-  Tag' :: df l ixh ix -> Tag' ix df l ixh ix
+refuteCZero :: CZero l ixh ix -> a
+refuteCZero ctxzero = ctxzero `seq` undefined
 
-data Unit' xi (l :: * -> *) ixh ix where
-  Unit' :: Unit' ixh l ixh ix
+data CTag ixtag df (l :: * -> *) ixh ix where
+  CTag :: df l ixh ix -> CTag ix df l ixh ix
+
+data CHole xi (l :: * -> *) ixh ix where
+  CHole :: CHole ixh l ixh ix
 
 type Unit = K ()
 
@@ -100,11 +103,11 @@ type family D f :: (* -> *) -- family name
                 -> *        -- type of the hole
                 -> *        -- type of surrounding tree
                 -> *
-type instance D (K a)         = Zero'
-type instance D (Id xi)       = Unit' xi
-type instance D (f :+: g)     = D f `Sum'` D g
-type instance D (f :*: g)     = Prod' (D f) g `Sum'` Prod' (D g) f
-type instance D (f ::: ixtag) = Tag' ixtag (D f)
+type instance D (K a)         = CZero
+type instance D (Id xi)       = CHole xi
+type instance D (f :+: g)     = D f `CSum` D g
+type instance D (f :*: g)     = CProd (D f) g `CSum` CProd (D g) f
+type instance D (f ::: ixtag) = CTag ixtag (D f)
 
 data CtxOf f l ix = forall ixh . Ix l ixh => CtxOf (D f l ixh ix) ixh
 
@@ -126,27 +129,27 @@ class ZipFuns (f :: (* -> *) -> * -> *) where
   --nextf  :: Ix l ixh => ixh -> D f ixh ix -> Either (CtxOf f l ix) (f l ix)
 
 instance ZipFuns f => ZipFuns (f ::: ixtag) where
-  firstf (Tag x)   = mapMbCtxOf Tag' (firstf x)
-  upf h (Tag' ctx) = Tag (upf h ctx)
+  firstf (Tag x)   = mapMbCtxOf CTag (firstf x)
+  upf h (CTag ctx) = Tag (upf h ctx)
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :*: g) where
-  firstf (x :*: y) = mapMbCtxOf (L' . (`Prod'` y)) (firstf x) `mplus`
-                     mapMbCtxOf (R' . (`Prod'` x)) (firstf y)
-  upf h (L' (Prod' ctx y)) = upf h ctx :*: y
-  upf h (R' (Prod' ctx x)) = x         :*: upf h ctx
+  firstf (x :*: y) = mapMbCtxOf (CL . (`CProd` y)) (firstf x) `mplus`
+                     mapMbCtxOf (CR . (`CProd` x)) (firstf y)
+  upf h (CL (CProd ctx y)) = upf h ctx :*: y
+  upf h (CR (CProd ctx x)) = x         :*: upf h ctx
 
 instance ZipFuns (K a) where
-  firstf (K _) = Nothing
-  upf ixh zeroval = undefined 
+  firstf (K _)    = Nothing
+  upf ixh ctxzero = refuteCZero ctxzero
 
 instance ZipFuns (Id xi) where
-  firstf (Id x) = Just (CtxOf Unit' x)
-  upf ixh Unit' = Id ixh
+  firstf (Id x) = Just (CtxOf CHole x)
+  upf ixh CHole = Id ixh
 
 instance (ZipFuns f, ZipFuns g) => ZipFuns (f :+: g) where
-  firstf (L x) = mapMbCtxOf L' (firstf x)
-  firstf (R x) = mapMbCtxOf R' (firstf x)
-  upf h (L' ctx) = L (upf h ctx)
-  upf h (R' ctx) = R (upf h ctx)
+  firstf (L x) = mapMbCtxOf CL (firstf x)
+  firstf (R x) = mapMbCtxOf CR (firstf x)
+  upf h (CL ctx) = L (upf h ctx)
+  upf h (CR ctx) = R (upf h ctx)
 
 
