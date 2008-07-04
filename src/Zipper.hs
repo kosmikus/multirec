@@ -113,6 +113,7 @@ enter :: Zipper l ix => ix -> Loc l ix
 down  :: Loc l ix -> Maybe (Loc l ix)
 up    :: Loc l ix -> Maybe (Loc l ix)
 right :: Loc l ix -> Maybe (Loc l ix)
+on    :: (forall ix. l ix -> ix -> a) -> Loc l ix -> a
 leave :: Loc l ix -> ix
 
 enter x                  = Loc x Empty
@@ -124,6 +125,8 @@ up (Loc x (Push c s))    = return (Loc (to (fill c x)) s)
 
 right (Loc x Empty)      = Nothing
 right (Loc x (Push c s)) = next (\z c' -> Loc z (Push c' s)) c x
+
+on f (Loc x _)           = f ix x
 
 leave (Loc x Empty)      = x
 leave loc                = leave (fromJust (up loc))
