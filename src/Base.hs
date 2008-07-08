@@ -31,12 +31,11 @@ data (:::) :: ((* -> *) -> * -> *) -> * -> (* -> *) -> * -> * where
 -- indexed families, generically
 -------------------------------------------------------------------------------
 
-class Fam l where
-  type PF l :: (* -> *) -> * -> *
+type family PF l :: (* -> *) -> * -> *
 
-type Str l ix = (PF l) l ix
+type Str l = (PF l) l
 
-class Fam l => Ix l ix where
+class Ix l ix where
   ix   :: l ix
   from :: ix -> Str l ix
   to   :: Str l ix -> ix

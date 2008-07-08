@@ -27,12 +27,11 @@ data AST :: * -> * where
   Decl :: AST Decl
   Exp  :: AST Exp
 
-instance Fam AST where
-  type PF AST = K Var   :*: Id Exp  ::: Decl  :+:    -- (:=)
-                K Var               ::: Exp   :+:    -- Var
-                K Var   :*: Id Exp  ::: Exp   :+:    -- Abs
-                Id Exp  :*: Id Exp  ::: Exp   :+:    -- App
-                Id Decl :*: Id Exp  ::: Exp          -- Let
+type instance PF AST = K Var   :*: Id Exp  ::: Decl  :+:    -- (:=)
+                       K Var               ::: Exp   :+:    -- Var
+                       K Var   :*: Id Exp  ::: Exp   :+:    -- Abs
+                       Id Exp  :*: Id Exp  ::: Exp   :+:    -- App
+                       Id Decl :*: Id Exp  ::: Exp          -- Let
 
 instance Ix AST Decl where
   ix                          = Decl

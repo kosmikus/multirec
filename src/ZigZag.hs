@@ -24,10 +24,9 @@ data ZigZag :: * -> * where
   ZZig :: ZigZag Zig
   ZZag :: ZigZag Zag
 
-instance Fam ZigZag where
-  type PF ZigZag = Id Zag  ::: Zig  :+:    -- Zig
-                   Id Zig  ::: Zag  :+:    -- Zag
-                   K ()    ::: Zag         -- Zap
+type instance PF ZigZag = Id Zag  ::: Zig  :+:    -- Zig
+                          Id Zig  ::: Zag  :+:    -- Zag
+                          K ()    ::: Zag         -- Zap
 
 instance Ix ZigZag Zig where
   ix                  = ZZig
