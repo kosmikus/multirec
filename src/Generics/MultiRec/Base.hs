@@ -16,10 +16,7 @@ module Generics.MultiRec.Base
    I0(..), K0(..),
 
    -- * Indexed systems
-   PF, Str, Ix(..),
-
-   -- * Higher-order fixed points
-   HFix(..)
+   PF, Str, Ix(..)
   ) where
 
 import Control.Applicative
@@ -86,8 +83,3 @@ class Ix s ix where
   from  :: (pfs ~ PF s) => ix -> pfs s I0 ix
   to    :: (pfs ~ PF s) => pfs s I0 ix -> ix
   index :: s ix
-
--- * Fixed point of indexed types
-
-data HFix (h :: (* -> *) -> * -> *) ix = HIn { hout :: h (HFix h) ix }
-
