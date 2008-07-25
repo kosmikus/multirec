@@ -76,10 +76,16 @@ type family PF s :: (* -> *) -> (* -> *) -> * -> *
 type Str s ix = (PF s) s I0 ix
 
 class Ix s ix where
+  from_ :: ix -> Str s ix
+  to_   :: Str s ix -> ix
+
   -- | Some functions need to have their types desugared in order to make programs
   -- that use them typable.  Desugaring consists in transforming ``inline'' type
   -- family applications into equality constraints. This is a strangeness in current
   -- versions of GHC that hopefully will be fixed sometime in the future.
   from  :: (pfs ~ PF s) => ix -> pfs s I0 ix
+  from = from_
   to    :: (pfs ~ PF s) => pfs s I0 ix -> ix
+  to = to_
+
   index :: s ix
