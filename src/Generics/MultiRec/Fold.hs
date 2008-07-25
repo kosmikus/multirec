@@ -24,6 +24,13 @@ unfold :: (Ix s ix, HFunctor (PF s)) =>
           CoAlgebra s r -> r ix -> ix
 unfold f = to . hmap (\ _ x -> I0 (unfold f x)) . f index
 
+type ParaAlgebra s r = forall ix. Ix s ix => s ix -> PF s s r ix -> ix -> r ix
+
+para :: (Ix s ix, HFunctor (PF s)) => 
+        ParaAlgebra s r -> ix -> r ix
+para f x = f index (hmap (\ _ (I0 x) -> para f x) (from x)) x
+
+
 -- * Creating an algebra
 
 infixr 5 &
