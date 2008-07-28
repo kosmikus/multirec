@@ -13,4 +13,5 @@ exposed-modules:	Generics.MultiRec.Base,
 			Generics.MultiRec.HFunctor,
 			Generics.MultiRec.Fold,
 			Generics.MultiRec.Compos
+extra-source-files:	examples/AST.hs
 build-depends:		base >= 3.0 
