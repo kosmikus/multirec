@@ -1,5 +1,5 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE TypeFamilies         #-}
 
 module ASTExamples where
 
@@ -12,6 +12,7 @@ import AST
 import Generics.MultiRec.Base
 import Generics.MultiRec.Compos
 import Generics.MultiRec.Fold
+import Generics.MultiRec.Eq
 
 -- | Example expression
 
@@ -64,3 +65,12 @@ eval x = let (EV f) = fold evalAlgebra x in f
 testEval :: Int
 testEval = eval example [("y", -12)] 
 
+-- | Equality instance for 'Expr'
+
+instance Eq Expr where
+  (==) = eq Expr
+
+-- | Test for equality
+
+testEq :: (Bool, Bool)
+testEq = (example == example, example == testRename)
