@@ -6,7 +6,6 @@
 module Generics.MultiRec.Eq where
 
 import Generics.MultiRec.Base
-import Generics.MultiRec.Fold
 
 class HEq f where
   heq :: s ix ->
