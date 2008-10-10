@@ -2,17 +2,27 @@ name:			multirec
 version:		0.1
 license:		BSD3
 license-file:		LICENSE
-author:			dgp-haskell
+author:			Alexey Rodriguez,
+                        Stefan Holdermans,
+                        Andres Löh,
+                        Johan Jeuring
 maintainer:		dgp-haskell
 synopsis:		Generic programming with systems of recursive datatypes
-stability:		provisional
+stability:		experimental
 build-type:		Simple
 cabal-version:		>= 1.2.1
+tested-with:		GHC == 6.8.3
 hs-source-dirs:		src
-exposed-modules:	Generics.MultiRec.Base,
-			Generics.MultiRec.HFunctor,
-			Generics.MultiRec.Fold,
-			Generics.MultiRec.Compos,
+exposed-modules:	Generics.MultiRec
+
+			-- Base
+                        Generics.MultiRec.Base
+
+			-- Generic functions
+			Generics.MultiRec.HFunctor
+			Generics.MultiRec.Fold
+			Generics.MultiRec.Compos
 			Generics.MultiRec.Eq
+
 extra-source-files:	examples/AST.hs
 build-depends:		base >= 3.0 
