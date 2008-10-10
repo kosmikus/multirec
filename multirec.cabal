@@ -6,7 +6,7 @@ author:			Alexey Rodriguez,
                         Stefan Holdermans,
                         Andres Löh,
                         Johan Jeuring
-maintainer:		dgp-haskell
+maintainer:		generics@haskell.org
 synopsis:		Generic programming with systems of recursive datatypes
 stability:		experimental
 build-type:		Simple

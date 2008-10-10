@@ -6,6 +6,26 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Generics.MultiRec.Base
+-- Copyright   :  (c) 2008 Universiteit Utrecht
+-- License     :  BSD3
+--
+-- Maintainer  :  generics@haskell.org
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- This module is the base of the multirec library. It defines the view of a
+-- system of datatypes: All the datatypes of the system are represented as
+-- indexed functors that are built up from the structure types defined in this
+-- module. Furthermore, in order to use the library for a system, conversion
+-- functions have to be defined between the original datatypes and their
+-- representation. The type class that holds these conversion functions are
+-- also defined here.
+--
+-----------------------------------------------------------------------------
+
 module Generics.MultiRec.Base 
   (-- * Structure types
    I(..), unI,

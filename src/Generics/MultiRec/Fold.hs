@@ -5,6 +5,20 @@
 {-# LANGUAGE LiberalTypeSynonyms #-}
 {-# LANGUAGE GADTs               #-}
 
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Generics.MultiRec.Fold
+-- Copyright   :  (c) 2008 Universiteit Utrecht
+-- License     :  BSD3
+--
+-- Maintainer  :  generics@haskell.org
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- The definition of generic fold.
+--
+-----------------------------------------------------------------------------
+
 module Generics.MultiRec.Fold where
 
 import Generics.MultiRec.Base

@@ -4,7 +4,7 @@
 -- Copyright   :  (c) 2008 Universiteit Utrecht
 -- License     :  BSD3
 --
--- Maintainer  :  dgp-haskell
+-- Maintainer  :  generics@haskell.org
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
