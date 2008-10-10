@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 --
 -- multirec --
--- generic programming with fixed points of mutually recursive datatypes
+-- generic programming with systems of recursive datatypes
 -- 
 -- This top-level module re-exports all other modules of the library.
 --
