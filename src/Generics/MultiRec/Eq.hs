@@ -3,9 +3,24 @@
 {-# LANGUAGE TypeOperators    #-}
 {-# LANGUAGE TypeFamilies #-}
 
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Generics.MultiRec.Eq
+-- Copyright   :  (c) 2008 Universiteit Utrecht
+-- License     :  BSD3
+--
+-- Maintainer  :  generics@haskell.org
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Generic equality.
+--
+-----------------------------------------------------------------------------
 module Generics.MultiRec.Eq where
 
 import Generics.MultiRec.Base
+
+-- * Generic equality
 
 class HEq f where
   heq :: s ix ->
