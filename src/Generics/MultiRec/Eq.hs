@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
 {-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -41,6 +41,7 @@ instance (HEq f, HEq g) => HEq (f :+: g) where
 instance (HEq f, HEq g) => HEq (f :*: g) where
   heq ix eq (x1 :*: y1) (x2 :*: y2) = heq ix eq x1 x2 && heq ix eq y1 y2
 
+-- The following instance does not compile with ghc-6.8.2
 instance HEq f => HEq (f :>: ix) where
   heq ix eq (Tag x1) (Tag x2) = heq ix eq x1 x2
 
