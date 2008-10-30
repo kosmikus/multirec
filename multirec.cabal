@@ -7,7 +7,9 @@ author:			Alexey Rodriguez,
                         Andres Löh,
                         Johan Jeuring
 maintainer:		generics@haskell.org
+category:		Generics
 synopsis:		Generic programming with systems of recursive datatypes
+homepage:		http://www.cs.uu.nl/wiki/GenericProgramming/MultiRec
 stability:		experimental
 build-type:		Simple
 cabal-version:		>= 1.2.1
@@ -25,4 +27,6 @@ exposed-modules:	Generics.MultiRec
 			Generics.MultiRec.Eq
 
 extra-source-files:	examples/AST.hs
+			examples/ASTExamples.hs
+			CREDITS
 build-depends:		base >= 3.0 
