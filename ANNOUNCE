@@ -75,36 +75,3 @@ authors, maintainers, and other interested persons at:
 
    http://www.haskell.org/mailman/listinfo/generics
 
-
-\FuturePlans
-At the moment the user is required to enable rewriting on a datatype by supplying
-a type-specific instance declaration. In the future, we are planning to automate
-this process using Template Haskell.
-
-\Contact
-Please do get in touch with us using the Generics mailing list 
-(\url{http://www.haskell.org/mailman/listinfo/generics})
-if you find the library useful or if you want
-to report bugs and make suggestions. 
-
-\FurtherReading
-\begin{itemize}
-\item
-The library is available on Hackage as \verb@multirec@. More information will
-be made available on the Mutlirec home page 
-(\url{http://www.cs.uu.nl/wiki/GenericProgramming/Multirec}).
-
-\item
-Paper about the ideas underlying the library:
-
-\url{http://www.cs.uu.nl/~andres/Rec}
-
-\item
-Paper about compos by Bringert and Ranta:
-
-\url{http://www.cs.chalmers.se/~bringert/publ/composOp/composOp.pdf}
-
-\end{itemize}  
-\end{hcarentry}
-
-\end{document}
