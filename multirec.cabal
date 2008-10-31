@@ -9,7 +9,32 @@ author:			Alexey Rodriguez,
 maintainer:		generics@haskell.org
 category:		Generics
 synopsis:		Generic programming with systems of recursive datatypes
-homepage:		http://www.cs.uu.nl/wiki/GenericProgramming/MultiRec
+homepage:		http://www.cs.uu.nl/wiki/GenericProgramming/Multirec
+description:
+  Many generic programs require information about the recursive positions
+  of a datatype. Examples include the generic fold, generic rewriting or
+  the Zipper data structure. Several generic programming systems allow to
+  write such functions by viewing datatypes as fixed points of a pattern
+  functor. Traditionally, this view has been limited to so-called regular
+  datatypes such as lists and binary trees. In particular, systems of
+  mutually recursive datatypes have been excluded.
+  .
+  With the multirec library, we provide a mechanism to talk about fixed
+  points of systems of datatypes that may be mutually recursive. On top
+  of this representations, generic functions such as the fold or the zipper
+  can then be defined.
+  .
+  We expect that the library will be especially interesting for compiler
+  writers, because ASTs are typically systems of mutually recursive datatypes,
+  and with Multirec it becomes easy to write generic functions on ASTs.
+  .
+  The library is based on ideas described in the paper:
+  .
+  *  Alexey Rodriguez, Stefan Holdermans, Andres Löh, Johan Jeuring.
+     /Generic programming with fixed points for mutually recursive datatypes/.
+     Technical Report, Universiteit Utrecht
+     (<http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-019.pdf>).
+ 
 stability:		experimental
 build-type:		Simple
 cabal-version:		>= 1.2.1
