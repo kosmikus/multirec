@@ -26,7 +26,7 @@ description:
   .
   We expect that the library will be especially interesting for compiler
   writers, because ASTs are typically systems of mutually recursive datatypes,
-  and with Multirec it becomes easy to write generic functions on ASTs.
+  and with multirec it becomes easy to write generic functions on ASTs.
   .
   The library is based on ideas described in the paper:
   .
