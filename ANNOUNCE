@@ -1,0 +1,110 @@
+multirec: Generic programming with systems of recursive datatypes
+=================================================================
+
+Many generic programs require information about the recursive positions
+of a datatype. Examples include the generic fold, generic rewriting or
+the Zipper data structure. Several generic programming systems allow to
+write such functions by viewing datatypes as fixed points of a pattern
+functor. Traditionally, this view has been limited to so-called regular
+datatypes such as lists and binary trees. In particular, systems of
+mutually recursive datatypes have been excluded.
+
+With the multirec library, we provide a mechanism to talk about fixed
+points of systems of datatypes that may be mutually recursive. On top
+of this representations, generic functions such as the fold or the zipper
+can then be defined.
+
+We expect that the library will be especially interesting for compiler
+writers, because ASTs are typically systems of mutually recursive datatypes,
+and with Multirec it becomes easy to write generic functions on ASTs.
+
+The library is based on ideas described in the paper:
+
+  Alexey Rodriguez, Stefan Holdermans, Andres Löh, Johan Jeuring
+  Generic programming with fixed points for mutually recursive datatypes
+  Technical Report, Universiteit Utrecht
+  http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-019.pdf
+
+Features
+--------
+
+* Generalizes the fixed point view from single, regular, datatypes to systems
+  of recursive datatypes.
+
+* Includes detailed examples: generic fold and generic compos, the latter
+  in the style of
+
+    Björn Bringert, Arne Ranta
+    A pattern for almost compositional functions
+    ICFP 2006
+  
+  The Zipper and generic rewriting for systems of datatypes 
+  will be released soon as separate libraries that build on Multirec.
+
+* The generic compos functions do not require the user to modify
+  their existing systems of datatypes.
+
+* In its current form, this library does not support nested datatypes.
+
+Requirements
+------------
+
+* GHC 6.8.3 or later
+* Cabal 1.2.1 or later
+
+Download
+--------
+
+With cabal-install:
+
+  cabal install multirec
+
+Get the package:
+
+  http://hackage.haskell.org/cgi-bin/hackage-scripts/package/multirec
+
+Get the source:
+
+  svn checkout https://svn.cs.uu.nl:12443/repos/dgp-haskell/multirec/trunk
+
+Bugs & Support
+--------------
+
+Report issues, request features, or just discuss the library with the
+authors, maintainers, and other interested persons at:
+
+   http://www.haskell.org/mailman/listinfo/generics
+
+
+\FuturePlans
+At the moment the user is required to enable rewriting on a datatype by supplying
+a type-specific instance declaration. In the future, we are planning to automate
+this process using Template Haskell.
+
+\Contact
+Please do get in touch with us using the Generics mailing list 
+(\url{http://www.haskell.org/mailman/listinfo/generics})
+if you find the library useful or if you want
+to report bugs and make suggestions. 
+
+\FurtherReading
+\begin{itemize}
+\item
+The library is available on Hackage as \verb@multirec@. More information will
+be made available on the Mutlirec home page 
+(\url{http://www.cs.uu.nl/wiki/GenericProgramming/Multirec}).
+
+\item
+Paper about the ideas underlying the library:
+
+\url{http://www.cs.uu.nl/~andres/Rec}
+
+\item
+Paper about compos by Bringert and Ranta:
+
+\url{http://www.cs.chalmers.se/~bringert/publ/composOp/composOp.pdf}
+
+\end{itemize}  
+\end{hcarentry}
+
+\end{document}
