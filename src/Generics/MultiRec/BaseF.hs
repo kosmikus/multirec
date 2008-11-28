@@ -26,11 +26,12 @@
 --
 -----------------------------------------------------------------------------
 
-module Generics.MultiRec.Base 
+module Generics.MultiRec.BaseF 
   (-- * Structure types
    I(..), unI,
    K(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
+   E(..),
 
    -- ** Unlifted variants
    I0(..), K0(..),
@@ -50,65 +51,83 @@ infixr 5 :+:
 infix  6 :>:
 infixr 7 :*:
 
+data ListU :: (* -> *) -> * where
+    List :: ListU []
+
+type instance PF ListU = K () :>: []
+                     :+: E :*: I [] :>: []
+
+instance Ix ListU [] where
+    from_ [] = L (Tag (K ()))
+    from_ (x : xs) = R (Tag (E x :*: I (I0 xs)))
+    to_ (L (Tag (K ()))) = []
+    to_ (R (Tag (E x :*: I (I0 xs)))) = x : xs
+    index = List
+
 -- | Represents recursive positions. The first argument indicates
 -- which type (within the system) to recurse on.
-data I :: * -> (* -> *) -> (* -> *) -> * -> * where
-  I :: Ix s xi => r xi -> I xi s r ix
+data I :: (* -> *) -> ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> * where
+  I :: Ix s xi => r e xi -> I xi s r e ix
 
 -- | Destructor for 'I'.
-unI :: I xi s r ix -> r xi
+unI :: I xi s r e ix -> r e xi
 unI (I x) = x
 
 -- | Represents constant types that do not belong to the system.
-data K a       (s :: * -> *) (r :: * -> *) ix = K {unK :: a}
+data K a       (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = K {unK :: a}
+
+-- | Represents element types that do not belong to the system.
+data E (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = E {unE :: e}
 
 -- | Represents sums (choices between constructors).
-data (f :+: g) (s :: * -> *) (r :: * -> *) ix = L (f s r ix) | R (g s r ix)
+data (f :+: g) (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = L (f s r e ix) | R (g s r e ix)
 
 -- | Represents products (sequences of fields of a constructor).
-data (f :*: g) (s :: * -> *) (r :: * -> *) ix = f s r ix :*: g s r ix
+data (f :*: g) (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = f s r e ix :*: g s r e ix
 
 -- | Is used to indicate the type (within the system) that a
 -- particular constructor injects to.
-data (:>:) :: ((* -> *) -> (* -> *) -> * -> *) -> * -> (* -> *) -> (* -> *) -> * -> * where
-  Tag :: f s r ix -> (f :>: ix) s r ix
+data (:>:) :: (((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> *) -> (* -> *) -> ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> * where
+  Tag :: f s r e ix -> (f :>: ix) s r e ix
 
 -- | Destructor for '(:>:)'.
-unTag :: (f :>: ix) s r ix -> f s r ix
+unTag :: (f :>: ix) s r e ix -> f s r e ix
 unTag (Tag x) = x
 
 -- ** Unlifted variants
 
 -- | Unlifted version of 'I'.
-newtype I0 a   = I0 { unI0 :: a }
+newtype I0 e a   = I0 { unI0 :: a e}
 
 -- | Unlifted version of 'K'.
 newtype K0 a b = K0 { unK0 :: a }
 
+{-
 instance Functor I0 where
   fmap f = I0 . f . unI0
 
 instance Applicative I0 where
   pure              = I0
   (I0 f) <*> (I0 x) = I0 (f x)
+  -}
 
 -- * Indexed systems
 
 -- | Type family describing the pattern functor of a system.
-type family PF s :: (* -> *) -> (* -> *) -> * -> *
-type Str s ix = (PF s) s I0 ix
+type family PF s :: ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> *
+type Str s e ix = (PF s) s I0 e ix
 
 class Ix s ix where
-  from_ :: ix -> Str s ix
-  to_   :: Str s ix -> ix
+  from_ :: ix e -> Str s e ix
+  to_   :: Str s e ix -> ix e
 
   -- | Some functions need to have their types desugared in order to make programs
   -- that use them typable.  Desugaring consists in transforming ``inline'' type
   -- family applications into equality constraints. This is a strangeness in current
   -- versions of GHC that hopefully will be fixed sometime in the future.
-  from  :: (pfs ~ PF s) => ix -> pfs s I0 ix
+  from  :: (pfs ~ PF s) => ix e -> pfs s I0 e ix
   from = from_
-  to    :: (pfs ~ PF s) => pfs s I0 ix -> ix
+  to    :: (pfs ~ PF s) => pfs s I0 e ix -> ix e
   to = to_
 
   index :: s ix

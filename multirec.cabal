@@ -44,12 +44,15 @@ exposed-modules:	Generics.MultiRec
 
 			-- Base
                         Generics.MultiRec.Base
+			Generics.MultiRec.BaseF
 
 			-- Generic functions
 			Generics.MultiRec.HFunctor
 			Generics.MultiRec.Fold
 			Generics.MultiRec.Compos
 			Generics.MultiRec.Eq
+			Generics.MultiRec.EqF
+			Generics.MultiRec.GMap
 
 extra-source-files:	examples/AST.hs
 			examples/ASTExamples.hs
