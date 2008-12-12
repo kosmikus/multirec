@@ -13,6 +13,7 @@ import Generics.MultiRec.Base
 import Generics.MultiRec.Compos
 import Generics.MultiRec.Fold
 import Generics.MultiRec.Eq
+import Generics.MultiRec.Show as GS
 
 -- | Example expression
 
@@ -77,3 +78,8 @@ instance Eq Expr where
 
 testEq :: (Bool, Bool)
 testEq = (example == example, example == testRename)
+
+-- | Test for generic show
+
+testShow :: IO ()
+testShow = putStrLn $ GS.show Expr example

@@ -16,6 +16,7 @@
 -- Generic equality.
 --
 -----------------------------------------------------------------------------
+
 module Generics.MultiRec.Eq where
 
 import Generics.MultiRec.Base
