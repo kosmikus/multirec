@@ -46,14 +46,17 @@ type Env = [(Var, Int)]
 
 evalAlgebra :: Algebra AST Value
 evalAlgebra _ =  
-     tag (\ (K x)                   -> EV (const x))
-  &  tag (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  +  y env))
-  &  tag (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  *  y env))
-  &  tag (\ (I (VV x))              -> EV (fromJust . lookup x))
-  &  tag (\ (I (DV e) :*: I (EV x)) -> EV (\ env -> x (e env)))
-  &  tag (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
-  &  tag (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
-  &  tag (\ (K x)                   -> VV x)
+ 
+     tag  (  con (\ (K x)                   -> EV (const x))
+          &  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  +  y env))
+          &  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  *  y env))
+          &  con (\ (I (VV x))              -> EV (fromJust . lookup x))
+          &  con (\ (I (DV e) :*: I (EV x)) -> EV (\ env -> x (e env)))
+          )
+  &  tag  (  con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
+          &  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
+          )
+  &  tag         (\ (K x)                   -> VV x)
 
 -- | Evaluator
 

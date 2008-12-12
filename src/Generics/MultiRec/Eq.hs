@@ -45,6 +45,9 @@ instance (HEq f, HEq g) => HEq (f :*: g) where
 instance HEq f => HEq (f :>: ix) where
   heq ix eq (Tag x1) (Tag x2) = heq ix eq x1 x2
 
+instance HEq f => HEq (C c f) where
+  heq ix eq (C x1) (C x2) = heq ix eq x1 x2
+
 eq :: (Ix s ix, HEq (PF s)) => s ix -> ix -> ix -> Bool
 eq ix x1 x2 = heq ix (\ ix (I0 x1) (I0 x2) -> eq ix x1 x2) (from x1) (from x2)
 

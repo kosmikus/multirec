@@ -60,3 +60,6 @@ type (f :-> g) (s :: * -> *) (r :: * -> *) ix = f s r ix -> g s r ix
 tag :: AlgPart a s r ix -> AlgPart (a :>: ix) s r ix'
 tag f (Tag x) = f x
 
+con :: AlgPart a s r ix -> AlgPart (C c a) s r ix
+con f (C x) = f x
+
