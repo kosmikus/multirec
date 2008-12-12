@@ -50,7 +50,6 @@ exposed-modules:	Generics.MultiRec
 			Generics.MultiRec.Fold
 			Generics.MultiRec.Compos
 			Generics.MultiRec.Eq
-			Generics.MultiRec.Show
 
 extra-source-files:	examples/AST.hs
 			examples/ASTExamples.hs
