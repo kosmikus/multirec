@@ -1,5 +1,5 @@
 name:			multirec
-version:		0.1.1
+version:		0.1.2
 license:		BSD3
 license-file:		LICENSE
 author:			Alexey Rodriguez,
@@ -44,6 +44,7 @@ exposed-modules:	Generics.MultiRec
 
 			-- Base
                         Generics.MultiRec.Base
+			Generics.MultiRec.Constructor
 
 			-- Generic functions
 			Generics.MultiRec.HFunctor
