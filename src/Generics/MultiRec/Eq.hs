@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
 {-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE TypeFamilies     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -31,6 +30,8 @@ class HEq f where
 instance HEq (I xi) where
   heq _ eq (I x1) (I x2) = eq index x1 x2
 
+-- | For constant types, we make use of the standard
+-- equality function.
 instance Eq x => HEq (K x) where
   heq _ eq (K x1) (K x2) = x1 == x2
 

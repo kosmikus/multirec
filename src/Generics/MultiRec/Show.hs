@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
 {-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE TypeFamilies     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -29,7 +28,7 @@ import Prelude hiding (show, showsPrec)
 -- * Generic show
 
 class HFunctor f => HShow f where
-  hShowsPrecAlg :: AlgebraF s f (K0 [Int -> ShowS])
+  hShowsPrecAlg :: Algebra' s f (K0 [Int -> ShowS])
 
 instance HShow (I xi) where
   hShowsPrecAlg _ (I (K0 x)) = K0 x
@@ -61,7 +60,7 @@ instance HShow f => HShow (C c f) where
 
 -- | A variant of the algebra that takes an extra argument
 -- to fix the system 's' the algebra works on.
-hShowsPrecAlg_ :: (HShow f) => s ix -> AlgebraF s f (K0 [Int -> ShowS])
+hShowsPrecAlg_ :: (HShow f) => s ix -> Algebra' s f (K0 [Int -> ShowS])
 hShowsPrecAlg_ _ = hShowsPrecAlg 
 
 showsPrec :: forall s ix. (Ix s ix, HShow (PF s)) => s ix -> Int -> ix -> ShowS
