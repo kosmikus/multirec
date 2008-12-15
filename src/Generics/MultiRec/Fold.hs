@@ -4,6 +4,7 @@
 {-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE LiberalTypeSynonyms #-}
 {-# LANGUAGE GADTs               #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -54,7 +55,11 @@ unfold f = to . hmap (\ _ x -> I0 (unfold f x)) . f index
 
 unfoldM :: (Ix s ix, HFunctor (PF s), Monad m) =>
            CoAlgebraF s m r -> r ix -> m ix
-unfoldM f x = f index x >>= liftM to . hmapM (\ _ x -> liftM I0 (unfoldM f x))
+unfoldM f x = f index x >>= liftMto . hmapM (\ _ x -> liftM I0 (unfoldM f x))
+  where
+    -- only for ghc-6.8.3 compatibility
+    liftMto :: (Monad m, Ix s ix, pfs ~ PF s) => m (pfs s I0 ix) -> m ix
+    liftMto = liftM to
 
 type ParaAlgebra'  s f   r = forall ix. Ix s ix => s ix -> f s r ix -> ix -> r ix
 type ParaAlgebra   s     r = ParaAlgebra' s (PF s) r
