@@ -53,6 +53,7 @@ exposed-modules:	Generics.MultiRec
 			Generics.MultiRec.Eq
 			Generics.MultiRec.EqF
 			Generics.MultiRec.GMap
+			Generics.MultiRec.Gen
 
 extra-source-files:	examples/AST.hs
 			examples/ASTExamples.hs
