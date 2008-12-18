@@ -15,17 +15,17 @@ open import Data.Function
 open import Category.Functor
 open import Category.Monad
 open import Data.Fin hiding (fold; _+_)
-open import Data.Star hiding (map; fold; _>>=_)
-                      renaming (ε to []; _◅_ to _∷_;
-                                return to [_])
+open import Data.Star hiding (map; fold; _>>=_; gmap; return)
 open import Relation.Binary
 
-module Base (n : ℕ) where
+module Base (n m : ℕ) where
 
   Ix = Fin n
+  EIx = Fin m
 
   data Code : Set1 where
     I    :  Ix             -> Code
+    E    :  EIx            -> Code
     K    :  Set            -> Code
     _⊕_  :  Code -> Code   -> Code
     _⊗_  :  Code -> Code   -> Code
@@ -35,67 +35,96 @@ module Base (n : ℕ) where
   infixr 4 _⊕_
   infix  5 _▷_
 
-  ⟦_⟧ : Code -> (Ix -> Set) -> Ix -> Set
-  ⟦  I x      ⟧  ⟨_⟩  _  =  ⟨ x ⟩
-  ⟦  K A      ⟧  _    _  =  A
-  ⟦  C₁ ⊕ C₂  ⟧  ⟨_⟩  y  =  ⟦ C₁ ⟧ ⟨_⟩ y  ⊎  ⟦  C₂  ⟧ ⟨_⟩ y
-  ⟦  C₁ ⊗ C₂  ⟧  ⟨_⟩  y  =  ⟦ C₁ ⟧ ⟨_⟩ y  ×  ⟦  C₂  ⟧ ⟨_⟩ y
-  ⟦  C ▷ x    ⟧  ⟨_⟩  y  =  x ≡ y         ×  ⟦  C   ⟧ ⟨_⟩ y
+  ⟦_⟧ : Code -> (Ix -> (EIx -> Set) -> Set) -> (EIx -> Set) -> Ix -> Set
+  ⟦  I x      ⟧  ⟨_⟩  elem _  =  ⟨ x ⟩ elem
+  ⟦  E x      ⟧  _    elem _  =  elem x
+  ⟦  K A      ⟧  _    _    _  =  A
+  ⟦  C₁ ⊕ C₂  ⟧  ⟨_⟩  elem y  =  ⟦ C₁ ⟧ ⟨_⟩ elem y  ⊎  ⟦  C₂  ⟧ ⟨_⟩ elem y
+  ⟦  C₁ ⊗ C₂  ⟧  ⟨_⟩  elem y  =  ⟦ C₁ ⟧ ⟨_⟩ elem y  ×  ⟦  C₂  ⟧ ⟨_⟩ elem y
+  ⟦  C ▷ x    ⟧  ⟨_⟩  elem y  =  x ≡ y         ×  ⟦  C   ⟧ ⟨_⟩ elem y
 
-  map :   {F G : Ix -> Set} {y : Ix} -> (C : Code) ->
-          ({x : Ix} -> F x -> G x) -> ⟦ C ⟧ F y -> ⟦ C ⟧ G y
-  map (  I x      )  f  y             =  f y
-  map (  K _      )  f  y             =  y
-  map (  C₁ ⊕ C₂  )  f  (inj₁ y₁)     =  inj₁ (map C₁ f y₁)
-  map (  C₁ ⊕ C₂  )  f  (inj₂ y₂)     =  inj₂ (map C₂ f y₂)
-  map (  C₁ ⊗ C₂  )  f  (y₁ , y₂)     =  map C₁ f y₁ , map C₂ f y₂
-  map (  C ▷ x    )  f  (≡-refl , y)  =  ≡-refl , map C f y
+  map :   {F G : Ix -> (EIx -> Set) -> Set} {y : Ix} -> (C : Code) ->
+          ({x : Ix} {elem : EIx -> Set} -> F x elem -> G x elem) -> (elem : EIx -> Set) -> ⟦ C ⟧ F elem y -> ⟦ C ⟧ G elem y
+  map (  I x      )  f  _    y             =  f y
+  map (  E x      )  f  _    y             =  y
+  map (  K _      )  f  _    y             =  y
+  map (  C₁ ⊕ C₂  )  f  elem (inj₁ y₁)     =  inj₁ (map C₁ f elem y₁)
+  map (  C₁ ⊕ C₂  )  f  elem (inj₂ y₂)     =  inj₂ (map C₂ f elem y₂)
+  map (  C₁ ⊗ C₂  )  f  elem (y₁ , y₂)     =  map C₁ f elem y₁ , map C₂ f elem y₂
+  map (  C ▷ x    )  f  elem (≡-refl , y)  =  ≡-refl , map C f elem y
 
   record Fam : Set1 where
     field
       FC    :  Code
-      ⟨_⟩   :  Ix -> Set
-      from  :  {x : Ix} -> ⟨ x ⟩ -> ⟦ FC ⟧ ⟨_⟩ x
-      to    :  {x : Ix} -> ⟦ FC ⟧ ⟨_⟩ x -> ⟨ x ⟩
+      ⟨_⟩   :  Ix -> (EIx -> Set) -> Set
+      from  :  {x : Ix} {elem : EIx -> Set} -> ⟨ x ⟩ elem -> ⟦ FC ⟧ ⟨_⟩ elem x
+      to    :  {x : Ix} {elem : EIx -> Set} -> ⟦ FC ⟧ ⟨_⟩ elem  x -> ⟨ x ⟩ elem
 
 module List where
 
-  open Base 2
+  open Base 1 1
 
   list  =  zero
-  el    =  suc zero
 
   data L (A : Set) : Set where
     nil  : L A
     cons : A -> L A -> L A
 
   ListC  :  Code
-  ListC =  (K ⊤ ⊕  I el    ⊗  I list) ▷ list
-        ⊕  I el ▷ el
+  ListC =  (K ⊤  ⊕  E zero ⊗ I list) ▷ list
 
-  ListI : Set -> Ix -> Set
-  ListI A zero = List A
-  ListI A (suc zero) = A
-  ListI A (suc (suc ()))
+  ListI : Ix -> (EIx -> Set) -> Set
+  ListI zero elem = List (elem zero)
+  ListI (suc ()) _
 
-  fromList : {x : Ix} -> {A : Set} -> ListI A x  -> ⟦ ListC ⟧ (ListI A) x
-  fromList {zero} [] = inj₁ (≡-refl , inj₁ tt  ) 
-  fromList {zero} (x ∷ xs) = inj₁ (≡-refl , inj₂ (x , xs)  ) 
-  fromList {suc zero} a = inj₂ (≡-refl , a ) 
-  fromList {suc (suc ())} _
+  fromList : {x : Ix} {elem : EIx -> Set} -> ListI x elem -> ⟦ ListC ⟧ ListI elem x
+  fromList {zero}    []       = ≡-refl , inj₁ _
+  fromList {zero}    (x ∷ xs) = ≡-refl , inj₂ (x , xs)
+  fromList {suc ()}  _
 
-  toList : {x : Ix} -> {A : Set} -> ⟦ ListC ⟧ (ListI A) x -> ListI A x
-  toList (inj₁ (≡-refl , inj₁ tt)) = []
-  toList (inj₁ (≡-refl , inj₂ (x , xs))) = x ∷ xs
-  toList (inj₂ (≡-refl , a)) = a
+  toList : {x : Ix} {elem : EIx -> Set} -> ⟦ ListC ⟧ ListI elem x -> ListI x elem
+  toList {zero}    (≡-refl , inj₁ _)        = []
+  toList {zero}    (≡-refl , inj₂ (x , xs)) = x ∷ xs
+  toList {suc ()}  _
 
-  LF : Set -> Fam
-  LF A = record
+  LF : Fam
+  LF = record
            {  FC    =  ListC
-           ;  ⟨_⟩   =  ListI A
-           ;  from  =  fromList {A = A}
-           ;  to    =  toList {A = A}
+           ;  ⟨_⟩   =  ListI
+           ;  from  =  fromList
+           ;  to    =  toList
            }
+
+module Map {m n : ℕ} (F : Base.Fam m n) where
+
+  open Base m n public
+  open Fam F
+
+  mutual
+    map' : (C : Code) -> {elems₁ elems₂ : EIx -> Set} -> {x : Ix} ->
+           ((ix : EIx) -> elems₁ ix -> elems₂ ix) -> ⟦ C ⟧ ⟨_⟩ elems₁ x -> ⟦ C ⟧ ⟨_⟩ elems₂ x
+    map' (I n) {elems₁} {elems₂} f i             =  gmap elems₁ elems₂ f i
+    map' (E n)                   f x             =  f n x
+    map' (K A)                   _ x             =  x
+    map' (F ⊕ G)                 f (inj₁ x)      =  inj₁ (map' F f x)
+    map' (F ⊕ G)                 f (inj₂ x)      =  inj₂ (map' G f x)
+    map' (F ⊗ G)                 f (x , y)       =  map' F f x , map' G f y
+    map' (C ▷ n)                 f (≡-refl , x)  =  ≡-refl , map' C f x
+
+    gmap : {x : Ix} -> (elems₁ elems₂ : EIx -> Set) -> ((ix : EIx) -> elems₁ ix -> elems₂ ix) -> ⟨ x ⟩ elems₁ -> ⟨ x ⟩ elems₂
+    gmap {n} elems₁ elems₂ f x = to {n} {elems₂} (map' FC {elems₁} {elems₂} f (from {n} {elems₁} x))
+
+module MapListTest where
+  open List
+  open Map LF
+  open Fam LF
+  isEven : ℕ -> Bool
+  isEven 0             = true
+  isEven 1             = false
+  isEven (suc (suc n)) = isEven n
+
+  test : gmap (const₁ ℕ) (const₁ Bool) (const isEven) (1 ∷ 2 ∷ 3 ∷ []) ≡ false ∷ true ∷ false ∷ []
+  test = ≡-refl
 
 module AST where
 
@@ -117,7 +146,7 @@ module AST where
   infixr 3 _≔_
   infixl 2 _∙_
 
-  open Base 3
+  open Base 3 0
 
   expr  =  zero
   decl  =  suc zero
@@ -152,47 +181,48 @@ module AST where
   ASTC   =  ExprC  ▷  expr
          ⊕  DeclC  ▷  decl
          ⊕  VarC   ▷  var
-  AST⟨_⟩ : Ix -> Set
-  AST⟨  x      ⟩ with viewAST x
-  AST⟨  (. _)  ⟩ | vexpr  =  Expr
-  AST⟨  (. _)  ⟩ | vdecl  =  Decl
-  AST⟨  (. _)  ⟩ | vvar   =  Var
 
-  fromExpr : Expr -> ⟦ ExprC ⟧ AST⟨_⟩ expr
+  AST⟨_⟩ : Ix -> (EIx -> Set) -> Set
+  AST⟨  x      ⟩ _ with viewAST x
+  AST⟨  (. _)  ⟩ _ | vexpr  =  Expr
+  AST⟨  (. _)  ⟩ _ | vdecl  =  Decl
+  AST⟨  (. _)  ⟩ _ | vvar   =  Var
+
+  fromExpr : Expr -> ⟦ ExprC ⟧ AST⟨_⟩ (\()) expr
   fromExpr  (econst i       )  =  inj₁                    i
   fromExpr  (eadd   e₁  e₂  )  =  inj₂ (inj₁              (e₁  ,  e₂  )  )
   fromExpr  (emul   e₁  e₂  )  =  inj₂ (inj₂ (inj₁        (e₁  ,  e₂  )  ))
   fromExpr  (evar   v       )  =  inj₂ (inj₂ (inj₂ (inj₁  v              )))
   fromExpr  (elet   d   e   )  =  inj₂ (inj₂ (inj₂ (inj₂  (d   ,  e   )  )))
   
-  fromDecl : Decl -> ⟦ DeclC ⟧ AST⟨_⟩ decl
+  fromDecl : Decl -> ⟦ DeclC ⟧ AST⟨_⟩ (\()) decl
   fromDecl  (v   ≔   e   )   =  inj₁  (v , e)
   fromDecl  (d₁  ∙   d₂  )   =  inj₂  (d₁ , d₂)
 
-  fromVar : Var -> ⟦ VarC ⟧ AST⟨_⟩ var
+  fromVar : Var -> ⟦ VarC ⟧ AST⟨_⟩ (\()) var
   fromVar v = v
   
-  fromAST : {x : Ix} -> AST⟨ x ⟩ -> ⟦ ASTC ⟧ AST⟨_⟩ x
+  fromAST : {x : Ix} {elem : EIx -> Set} -> AST⟨ x ⟩ elem -> ⟦ ASTC ⟧ AST⟨_⟩ elem x
   fromAST {x} v with viewAST x
   fromAST e  |  vexpr  =  inj₁          (≡-refl , fromExpr   e  ) 
   fromAST d  |  vdecl  =  inj₂ (inj₁    (≡-refl , fromDecl   d  ))
   fromAST v  |  vvar   =  inj₂ (inj₂    (≡-refl , fromVar    v  ))
 
-  toExpr : ⟦ ExprC ⟧ AST⟨_⟩ expr -> Expr
+  toExpr : ⟦ ExprC ⟧ AST⟨_⟩ (\()) expr -> Expr
   toExpr (inj₁                    i              )     =  econst i
   toExpr (inj₂ (inj₁              (e₁  ,  e₂  )  ))    =  eadd e₁ e₂
   toExpr (inj₂ (inj₂ (inj₁        (e₁  ,  e₂  )  )))   =  emul e₁ e₂
   toExpr (inj₂ (inj₂ (inj₂ (inj₁  v              ))))  =  evar v
   toExpr (inj₂ (inj₂ (inj₂ (inj₂  (d   ,  e   )  ))))  =  elet d e
 
-  toDecl : ⟦ DeclC ⟧ AST⟨_⟩ decl -> Decl
+  toDecl : ⟦ DeclC ⟧ AST⟨_⟩ (\()) decl -> Decl
   toDecl (inj₁  (v    ,  e   ))  =  v   ≔   e
   toDecl (inj₂  (d₁   ,  d₂  ))  =  d₁  ∙   d₂
 
-  toVar : ⟦ VarC ⟧ AST⟨_⟩ var -> Var
+  toVar : ⟦ VarC ⟧ AST⟨_⟩ (\()) var -> Var
   toVar v = v
 
-  toAST : {x : Ix} -> ⟦ ASTC ⟧ AST⟨_⟩ x -> AST⟨ x ⟩
+  toAST : {x : Ix} {elem : EIx -> Set} -> ⟦ ASTC ⟧ AST⟨_⟩ elem x -> AST⟨ x ⟩ elem
   toAST (inj₁        (≡-refl  ,    e  ))   =   toExpr e
   toAST (inj₂ (inj₁  (≡-refl  ,    d  )))  =   toDecl d
   toAST (inj₂ (inj₂  (≡-refl  ,    v  )))  =   toVar v
@@ -205,30 +235,32 @@ module AST where
           ;  to    =  toAST
           }
 
-module Fold {n : ℕ} (F : Base.Fam n) where
+module Fold {m n : ℕ} (F : Base.Fam m n) where
 
-  open Base n public
+  open Base m n public
   open Fam F
 
-  RawAlg : Code -> (F G : Ix -> Set) -> Ix -> Set
-  RawAlg C F G y = ⟦ C ⟧ F y -> G y
+  RawAlg : Code -> (F G : Ix -> (EIx -> Set) -> Set) -> Ix -> (EIx -> Set) -> Set
+  RawAlg C F G y elem = ⟦ C ⟧ F elem y -> G y elem
 
-  Alg : Code -> (F G : Ix -> Set) -> Ix -> Set
-  Alg (  I x      )  F G y  =  F x -> G y
-  Alg (  K A      )  F G y  =  A -> G y
-  Alg (  C₁ ⊕ C₂  )  F G y  =  Alg C₁ F G y × Alg C₂ F G y
-  Alg (  C₁ ⊗ C₂  )  F G y  =  Alg C₁ F (Alg C₂ F G) y
-  Alg (  C ▷ x    )  F G y  =  Alg C F G x
+  Alg : Code -> (F G : Ix -> (EIx -> Set) -> Set) -> Ix -> (EIx -> Set) -> Set
+  Alg (  I x      )  F G y elem =  F x elem -> G y elem
+  Alg (  E n      )  F G y elem =  elem n -> G y elem
+  Alg (  K A      )  F G y elem =  A -> G y elem
+  Alg (  C₁ ⊕ C₂  )  F G y elem =  Alg C₁ F G y elem × Alg C₂ F G y elem
+  Alg (  C₁ ⊗ C₂  )  F G y elem =  Alg C₁ F (Alg C₂ F G) y elem
+  Alg (  C ▷ x    )  F G y elem =  Alg C F G x elem
 
-  RawAlgebra   : (Ix -> Set) -> Set
-  RawAlgebra  F  =  (x : Ix) -> RawAlg  FC F F x
+  RawAlgebra   : (Ix -> (EIx -> Set) -> Set) -> Set1
+  RawAlgebra  F  =  (x : Ix) (elem : EIx -> Set) -> RawAlg  FC F F x elem
 
-  Algebra      : (Ix -> Set) -> Set
-  Algebra     F  =  (x : Ix) -> Alg     FC F F x
+  Algebra      : (Ix -> (EIx -> Set) -> Set) -> Set1
+  Algebra     F  =  (x : Ix) (elem : EIx -> Set) -> Alg     FC F F x elem
 
-  apply :   (C : Code) {F G : Ix -> Set} {y : Ix} ->
-            Alg C F G y -> RawAlg C F G y
+  apply :   (C : Code) {elem : EIx -> Set} {F G : Ix -> (EIx -> Set) -> Set} {y : Ix} ->
+            Alg C F G y elem -> RawAlg C F G y elem
   apply (  I x      )  a          y             =  a y
+  apply (  E n      )  a          y             =  a y
   apply (  K _      )  a          y             =  a y
   apply (  C₁ ⊕ C₂  )  (a₁ , a₂)  (inj₁ y₁)     =  apply C₁ a₁ y₁
   apply (  C₁ ⊕ C₂  )  (a₁ , a₂)  (inj₂ y₂)     =  apply C₂ a₂ y₂
@@ -236,15 +268,15 @@ module Fold {n : ℕ} (F : Base.Fam n) where
   apply (  C ▷ x    )  a          (≡-refl , y)  =  apply C a y
 
   -- does not termination-check:
-  foldRaw   :  {y : Ix} {F : Ix -> Set} -> 
-               RawAlgebra  F  ->  ⟨ y ⟩ -> F y
+  foldRaw   :  {y : Ix} {elem : EIx -> Set} {F : Ix -> (EIx -> Set) -> Set} -> 
+               RawAlgebra F  ->  ⟨ y ⟩ elem -> F y elem
 
-  foldRaw alg x = alg _ (map FC (foldRaw  alg) (from x))
+  foldRaw {y} {elem} alg x = alg _ elem (map FC (foldRaw  alg) elem (from {y} {elem} x))
 
-  fold      :  {y : Ix} {F : Ix -> Set} ->
-               Algebra     F  ->  ⟨ y ⟩ -> F y
+  fold      :  {y : Ix} {elem : EIx -> Set} {F : Ix -> (EIx -> Set) -> Set} ->
+               Algebra     F  ->  ⟨ y ⟩ elem -> F y elem
 
-  fold alg = foldRaw (\ x -> apply FC (alg x))
+  fold alg = foldRaw (\ x elem -> apply FC (alg x elem))
 
 module FoldExample where
 
@@ -272,14 +304,14 @@ module FoldExample where
   testInsert₃ : (insert "y" 4 (insert "x" 2 empty)) "x" ≡ 2
   testInsert₃ = ≡-refl
 
-  Value : Ix -> Set
-  Value x with viewAST x
-  Value (. _)  | vexpr  =  Env -> ℕ
-  Value (. _)  | vdecl  =  Env -> Env
-  Value (. _)  | vvar   =  Var
+  Value : Ix -> (EIx -> Set) -> Set
+  Value x _ with viewAST x
+  Value (. _) _ | vexpr  =  Env -> ℕ
+  Value (. _) _ | vdecl  =  Env -> Env
+  Value (. _) _ | vvar   =  Var
 
   evalAlgebra : Algebra Value
-  evalAlgebra _ =  
+  evalAlgebra _ _ =
                    (  (\ i       env  ->  i                     )   ,   -- |econst|
                       (\ r₁  r₂  env  ->  r₁ env + r₂ env       )   ,   -- |eadd|
                       (\ r₁  r₂  env  ->  r₁ env * r₂ env       )   ,   -- |emul|
@@ -288,8 +320,9 @@ module FoldExample where
                    (  (\ v   r   env  ->  insert v (r env) env  )   ,   -- |_≔_|
                       (\ f₁  f₂  env  ->  f₂ (f₁ env)           ))  ,   -- |_∙_|
                    (  (\ v            ->  v                     ))
-  eval : Expr -> Value expr
-  eval = fold {expr} {Value} evalAlgebra
+
+  eval : Expr -> Value expr (\())
+  eval = fold {expr} {\()} {Value} evalAlgebra
 
   example : Expr
   example = elet  (  "x"  ≔  emul (econst 6) (econst 9) ∙
@@ -299,29 +332,31 @@ module FoldExample where
   testFold : eval example empty ≡ 110
   testFold = ≡-refl
 
-module Zipper {n : ℕ} (F : Base.Fam n) where
+module Zipper {m n : ℕ} (F : Base.Fam m n) (elem : Fin n -> Set) where
 
-  open Base n public
+  open Base m n public
   open Fam F
 
   infixr 1 _,_
 
   Ctx : Code -> Ix -> Ix -> Set
   Ctx (  I x      )  y z  =  x ≡ y
+  Ctx (  E n      )  y z  =  ⊥
   Ctx (  K _      )  y z  =  ⊥
   Ctx (  C₁ ⊕ C₂  )  y z  =  Ctx C₁ y z    ⊎  Ctx C₂ y z
-  Ctx (  C₁ ⊗ C₂  )  y z  =  Ctx C₁ y z    ×  ⟦ C₂ ⟧ ⟨_⟩ z
-                          ⊎  ⟦ C₁ ⟧ ⟨_⟩ z  ×  Ctx C₂ y z
+  Ctx (  C₁ ⊗ C₂  )  y z  =  Ctx C₁ y z    ×  ⟦ C₂ ⟧ ⟨_⟩ elem z
+                          ⊎  ⟦ C₁ ⟧ ⟨_⟩ elem z  ×  Ctx C₂ y z
   Ctx (  C ▷ x    )  y z  =  x ≡ z × Ctx C y z
   Ctxs : Rel Ix
   Ctxs = Star (Ctx FC)
 
   data Loc : Ix -> Set where
-    _,_ : {x y : Ix} -> ⟨ x ⟩ -> Ctxs x y -> Loc y
+    _,_ : {x y : Ix} -> ⟨ x ⟩ elem -> Ctxs x y -> Loc y
 
   fill :   (C : Code) {x y : Ix} -> 
-           Ctx C x y -> ⟨ x ⟩ -> ⟦ C ⟧ ⟨_⟩ y
+           Ctx C x y -> ⟨ x ⟩ elem -> ⟦ C ⟧ ⟨_⟩ elem y
   fill (  I _      )   ≡-refl                 y   =  y
+  fill (  E _      )   ()                     _
   fill (  K _      )   ()                     _ 
   fill (  C₁ ⊕ C₂  )   (inj₁ cy₁)             y₁  =  inj₁ (fill C₁ cy₁ y₁)
   fill (  C₁ ⊕ C₂  )   (inj₂ cy₂)             y₂  =  inj₂ (fill C₂ cy₂ y₂)
@@ -335,13 +370,14 @@ module Zipper {n : ℕ} (F : Base.Fam n) where
   Nav = {x : Ix} -> Loc x -> Maybe (Loc x)
 
   up : Nav
-  up (x , [])      =  ∅
-  up (x , c ∷ cs)  =  return (to (fill FC c x) , cs)
+  up (x , ε)       =  ∅
+  up (x , c ◅ cs)  =  return (to (fill FC c x) , cs)
 
   first :   {A : Set} (C : Code) {y : Ix} ->
-            ({x : Ix} -> ⟨ x ⟩ -> Ctx C x y -> A) ->
-            ⟦ C ⟧ ⟨_⟩ y -> Maybe A
+            ({x : Ix} -> ⟨ x ⟩ elem -> Ctx C x y -> A) ->
+            ⟦ C ⟧ ⟨_⟩ elem y -> Maybe A
   first (  I _      ) k y             =  return (k y ≡-refl)
+  first (  E _      ) k _             =  ∅
   first (  K _      ) k _             =  ∅
   first (  C₁ ⊕ C₂  ) k (inj₁ y₁)     =  first C₁  (\z cy₁  ->  k z (inj₁ cy₁)         )  y₁
   first (  C₁ ⊕ C₂  ) k (inj₂ y₂)     =  first C₂  (\z cy₂  ->  k z (inj₂ cy₂)         )  y₂
@@ -350,12 +386,13 @@ module Zipper {n : ℕ} (F : Base.Fam n) where
   first (  C ▷ _    ) k (≡-refl , y)  =  first C   (\z cy   ->  k z (≡-refl , cy)      )  y
 
   down : Nav
-  down (x , cs) = first FC (\z c -> z , (c ∷ cs)) (from x) 
+  down (x , cs) = first FC (\z c -> z , (c ◅ cs)) (from x)
 
   next :   {A : Set} (C : Code) {y : Ix} ->
-           ({x : Ix} -> ⟨ x ⟩ -> Ctx C x y -> A) ->
-           {x : Ix} -> Ctx C x y -> ⟨ x ⟩ -> Maybe A
+           ({x : Ix} -> ⟨ x ⟩ elem -> Ctx C x y -> A) ->
+           {x : Ix} -> Ctx C x y -> ⟨ x ⟩ elem -> Maybe A
   next (  I _      ) k ≡-refl             y   =  ∅
+  next (  E _      ) k ()                 _
   next (  K _      ) k ()                 _
   next (  C₁ ⊕ C₂  ) k (inj₁ cy₁)         y₁  =  next   C₁  (\z cy₁′  -> k z (inj₁ cy₁′)                         ) cy₁  y₁
   next (  C₁ ⊕ C₂  ) k (inj₂ cy₂)         y₂  =  next   C₂  (\z cy₂′  -> k z (inj₂ cy₂′)                         ) cy₂  y₂
@@ -365,27 +402,27 @@ module Zipper {n : ℕ} (F : Base.Fam n) where
   next (  C ▷ _    ) k (≡-refl , cy)      y   =  next   C   (\z cy′   -> k z (≡-refl , cy′)                      ) cy   y
 
   right : Nav
-  right (x ,  []        )  =  ∅
-  right (x ,  (c ∷ cs)  )  =  next FC (\z c′ -> z , (c′ ∷ cs)) c x 
+  right (x ,  ε         )  =  ∅
+  right (x ,  (c ◅ cs)  )  =  next FC (\z c′ -> z , (c′ ◅ cs)) c x
 
-  enter : {x : Ix} -> ⟨ x ⟩ -> Loc x
-  enter x = x , []
+  enter : {x : Ix} -> ⟨ x ⟩ elem -> Loc x
+  enter x = x , ε
 
-  leave : {x : Ix} -> Loc x -> ⟨ x ⟩
-  leave (x , [])        =  x
-  leave (x , (c ∷ cs))  =  leave (to (fill FC c x) , cs)
+  leave : {x : Ix} -> Loc x -> ⟨ x ⟩ elem
+  leave (x , ε)         =  x
+  leave (x , (c ◅ cs))  =  leave (to (fill FC c x) , cs)
 
-  update : ((x : Ix) -> ⟨ x ⟩ -> ⟨ x ⟩) -> Nav
+  update : ((x : Ix) -> ⟨ x ⟩ elem -> ⟨ x ⟩ elem ) -> Nav
   update f (x , cs) = return (f _ x , cs)
 
-  on :  {A : Set} -> ((x : Ix) -> ⟨ x ⟩ -> A) ->
+  on :  {A : Set} -> ((x : Ix) -> ⟨ x ⟩ elem -> A) ->
         {x : Ix} -> Loc x -> A
   on f (x , cs) = f _ x
 
 module ZipperExample where
 
   open AST
-  open Zipper AST
+  open Zipper AST (\())
   open Fam AST
   open FoldExample
   open RawMonadPlus MaybeMonadPlus
@@ -399,7 +436,7 @@ module ZipperExample where
     return (enter {expr} source) >>=
     down >>= down >>= right >>= update simp >>=
     return ∘ leave
-      where  simp : (n : Ix) -> ⟨ n ⟩ -> ⟨ n ⟩
+      where  simp : {elem : EIx -> Set} (n : Ix) -> ⟨ n ⟩ elem -> ⟨ n ⟩ elem
              simp n x with viewAST n
              simp (. _) e  |  vexpr  =  econst (eval e empty)
              simp (. _) d  |  vdecl  =  d
@@ -408,22 +445,3 @@ module ZipperExample where
   target = elet ("x" ≔ econst 54) (eadd (evar "x") (evar "y"))
   testZipper : callZipper ≡ just target
   testZipper = ≡-refl
-
-module ListExample where
-
-  open List
-  open Base 2
-
-  listmap' : {A B C : Set} {y : Ix} -> ({x : Ix} -> ListI A x -> ListI B x) -> ⟦ ListC ⟧ (ListI A) y -> ⟦ ListC ⟧ (ListI B) y
-  listmap' {A} {B} {C} f xs = map ListC (\ {x} -> f {x}) xs
-
-  -- does not termination-check:
-  listmap : {A B : Set} -> (A -> B) -> List A -> List B
-  listmap {A} {B} f xs = toList (listmap' {A} {B} {⊤} (\ {x} -> f' x) (fromList {zero} xs))
-    where f' : (x : Ix) -> ListI A x -> ListI B x
-          f' zero       xs = listmap f xs
-          f' (suc zero) a  = f a
-          f' (suc (suc ())) _
-
-  testlistmap : listmap (\ n -> n + 1) (0 ∷ 1 ∷ 2 ∷ []) ≡ (1 ∷ 2 ∷ 3 ∷ [])
-  testlistmap = ≡-refl
