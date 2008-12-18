@@ -31,6 +31,10 @@ module Generics.MultiRec.Base
    I(..), unI,
    K(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
+   C(..), unC,
+
+   -- ** Constructor information
+   module Generics.MultiRec.Constructor,
 
    -- ** Unlifted variants
    I0(..), K0(..),
@@ -43,6 +47,7 @@ module Generics.MultiRec.Base
   ) where
 
 import Control.Applicative
+import Generics.MultiRec.Constructor
 
 -- * Structure types
 
@@ -76,6 +81,14 @@ data (:>:) :: ((* -> *) -> (* -> *) -> * -> *) -> * -> (* -> *) -> (* -> *) -> *
 -- | Destructor for '(:>:)'.
 unTag :: (f :>: ix) s r ix -> f s r ix
 unTag (Tag x) = x
+
+-- | Represents constructors.
+data C c f     (s :: * -> *) (r :: * -> *) ix where
+  C :: (Constructor c) => f s r ix -> C c f s r ix
+
+-- | Destructor for 'C'.
+unC :: C c f s r ix -> f s r ix
+unC (C x) = x
 
 -- ** Unlifted variants
 

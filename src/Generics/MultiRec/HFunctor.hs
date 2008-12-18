@@ -48,6 +48,9 @@ instance (HFunctor f, HFunctor g) => HFunctor (f :*: g) where
 instance HFunctor f => HFunctor (f :>: ix) where
   hmapA f (Tag x) = liftA Tag (hmapA f x)
 
+instance HFunctor f => HFunctor (C c f) where
+  hmapA f (C x) = liftA C (hmapA f x)
+
 -- | The function 'hmap' takes a functor @f@. All the recursive instances
 -- in that functor are wrapped by an application of @r@. The argument to
 -- 'hmap' takes a function that transformes @r@ occurrences into @r'@

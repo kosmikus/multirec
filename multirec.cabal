@@ -1,5 +1,5 @@
 name:			multirec
-version:		0.1
+version:		0.1.2
 license:		BSD3
 license-file:		LICENSE
 author:			Alexey Rodriguez,
@@ -45,6 +45,7 @@ exposed-modules:	Generics.MultiRec
 			-- Base
                         Generics.MultiRec.Base
 			Generics.MultiRec.BaseF
+			Generics.MultiRec.Constructor
 
 			-- Generic functions
 			Generics.MultiRec.HFunctor
@@ -54,6 +55,7 @@ exposed-modules:	Generics.MultiRec
 			Generics.MultiRec.EqF
 			Generics.MultiRec.GMap
 			Generics.MultiRec.Gen
+			Generics.MultiRec.Show
 
 extra-source-files:	examples/AST.hs
 			examples/ASTExamples.hs

@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes       #-}
 {-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE TypeFamilies     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -16,6 +15,7 @@
 -- Generic equality.
 --
 -----------------------------------------------------------------------------
+
 module Generics.MultiRec.Eq where
 
 import Generics.MultiRec.Base
@@ -30,6 +30,8 @@ class HEq f where
 instance HEq (I xi) where
   heq _ eq (I x1) (I x2) = eq index x1 x2
 
+-- | For constant types, we make use of the standard
+-- equality function.
 instance Eq x => HEq (K x) where
   heq _ eq (K x1) (K x2) = x1 == x2
 
@@ -44,6 +46,9 @@ instance (HEq f, HEq g) => HEq (f :*: g) where
 -- The following instance does not compile with ghc-6.8.2
 instance HEq f => HEq (f :>: ix) where
   heq ix eq (Tag x1) (Tag x2) = heq ix eq x1 x2
+
+instance HEq f => HEq (C c f) where
+  heq ix eq (C x1) (C x2) = heq ix eq x1 x2
 
 eq :: (Ix s ix, HEq (PF s)) => s ix -> ix -> ix -> Bool
 eq ix x1 x2 = heq ix (\ ix (I0 x1) (I0 x2) -> eq ix x1 x2) (from x1) (from x2)
