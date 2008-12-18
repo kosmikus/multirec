@@ -22,9 +22,9 @@ module Base (n : ℕ) where
   infixr 4 _⊕_
 
   ⟦_⟧ : Code -> (Ix -> Set) -> Set -> Set
-  ⟦ I ⟧ _ A = A
-  ⟦ E n ⟧ elem _ = elem n
-  ⟦ K A ⟧ _ _ = A
+  ⟦ I ⟧     _    A = A
+  ⟦ E n ⟧   elem _ = elem n
+  ⟦ K X ⟧   _    _ = X
   ⟦ F ⊕ G ⟧ elem A = ⟦ F ⟧ elem A ⊎ ⟦ G ⟧ elem A
   ⟦ F ⊛ G ⟧ elem A = ⟦ F ⟧ elem A × ⟦ G ⟧ elem A
 
@@ -51,11 +51,11 @@ module List where
   ListF = K ⊤ ⊕ E zero ⊛ I
 
   fromList : {A : Set} -> List A -> ⟦ ListF ⟧ (const₁ A) (List A)
-  fromList [] = inj₁ _
+  fromList []       = inj₁ _
   fromList (x ∷ xs) = inj₂ (x , xs)
 
   toList : {A : Set} -> ⟦ ListF ⟧ (const₁ A) (List A) -> List A
-  toList (inj₁ _) = []
+  toList (inj₁ _)        = []
   toList (inj₂ (x , xs)) = x ∷ xs
 
   ListRep : Rep
@@ -103,12 +103,12 @@ module Map {n : ℕ} (R : Base.Rep n) where
 
   mutual
     map' : (C : Code) -> {elems₁ elems₂ : Ix -> Set} -> ((ix : Ix) -> elems₁ ix -> elems₂ ix) -> ⟦ C ⟧ elems₁ (Type elems₁) -> ⟦ C ⟧ elems₂ (Type elems₂)
-    map' I {elems₁} {elems₂} f i = map elems₁ elems₂ f i -- to {elems₂} (map' FC {elems₁} {elems₂} f (from {elems₁} i))
-    map' (E n) f x = f n x
-    map' (K A) _ x = x
-    map' (F ⊕ G) f (inj₁ x) = inj₁ (map' F f x)
-    map' (F ⊕ G) f (inj₂ x) = inj₂ (map' G f x)
-    map' (F ⊛ G) f (x , y) = map' F f x , map' G f y
+    map' I {elems₁} {elems₂} f i        = map elems₁ elems₂ f i -- to {elems₂} (map' FC {elems₁} {elems₂} f (from {elems₁} i))
+    map' (E n)               f x        = f n x
+    map' (K A)               _ x        = x
+    map' (F ⊕ G)             f (inj₁ x) = inj₁ (map' F f x)
+    map' (F ⊕ G)             f (inj₂ x) = inj₂ (map' G f x)
+    map' (F ⊛ G)             f (x , y)  = map' F f x , map' G f y
 
     map : (elems₁ elems₂ : Ix -> Set) -> ((ix : Ix) -> elems₁ ix -> elems₂ ix) -> Type elems₁ -> Type elems₂
     map elems₁ elems₂ f x = to {elems₂} (map' FC {elems₁} {elems₂} f (from {elems₁} x))
@@ -140,7 +140,7 @@ module MapTreeTest where
   open import Relation.Binary.PropositionalEquality
 
   f : (ix : Ix) -> elems₂ ℕ ℕ ix -> elems₂ Bool String ix
-  f zero = isEven
+  f zero         = isEven
   f (suc (zero)) = show
   f (suc (suc ()))
 
