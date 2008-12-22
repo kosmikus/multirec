@@ -102,6 +102,9 @@ instance Applicative I0 where
   pure              = I0
   (I0 f) <*> (I0 x) = I0 (f x)
 
+instance Functor (K0 a) where
+  fmap f = K0 . unK0
+
 -- * Indexed systems
 
 -- | Type family describing the pattern functor of a system.
