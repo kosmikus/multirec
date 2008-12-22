@@ -29,7 +29,8 @@ module Generics.MultiRec.TH
 
 import Generics.MultiRec.Base
 import Generics.MultiRec.Constructor
-import Language.Haskell.TH
+import Language.Haskell.TH hiding (Fixity())
+import Language.Haskell.TH.Syntax (Lift(..))
 import Control.Monad
 
 -- | Given a list of datatype names, derive datatypes and 
@@ -84,11 +85,36 @@ constrInstance n =
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
   dataD (cxt []) (mkName (nameBase n)) [] [] [] 
+mkData (InfixC t1 n t2) =
+  mkData (NormalC n [t1,t2])
+
+instance Lift Fixity where
+  lift Prefix      = conE 'Prefix
+  lift (Infix a n) = conE 'Infix `appE` [| a |] `appE` [| n |]
+
+instance Lift Associativity where
+  lift LeftAssociative  = conE 'LeftAssociative
+  lift RightAssociative = conE 'RightAssociative
+  lift NotAssociative   = conE 'NotAssociative
 
 mkInstance :: Con -> Q Dec
 mkInstance (NormalC n _) =
-  instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
-    [funD 'conName [clause [wildP] (normalB (stringE (nameBase n))) []]]
+    instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
+      [funD 'conName [clause [wildP] (normalB (stringE (nameBase n))) []]]
+mkInstance (InfixC t1 n t2) =
+    do
+      i <- reify n
+      let fi = case i of
+                 DataConI _ _ _ f -> convertFixity f
+                 _ -> Prefix
+      instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
+        [funD 'conName   [clause [wildP] (normalB (stringE (nameBase n))) []],
+         funD 'conFixity [clause [wildP] (normalB [| fi |]) []]]
+  where
+    convertFixity (Fixity n d) = Infix (convertDirection d) n
+    convertDirection InfixL = LeftAssociative
+    convertDirection InfixR = RightAssociative
+    convertDirection InfixN = NotAssociative
 
 pfType :: [Name] -> Name -> Q Type
 pfType ns n =
@@ -112,6 +138,8 @@ pfCon ns (NormalC n fs) =
   where
     prod :: Q Type -> Q Type -> Q Type
     prod a b = conT ''(:*:) `appT` a `appT` b
+pfCon ns (InfixC t1 n t2) =
+    pfCon ns (NormalC n [t1,t2])
 
 pfField :: [Name] -> Type -> Q Type
 pfField ns t@(ConT n) | n `elem` ns = conT ''I `appT` return t
@@ -162,6 +190,8 @@ fromCon wrap ns m i (NormalC n fs) =
       (normalB $ wrap $ lrE m i $ conE 'C `appE` foldr1 prod (zipWith (fromField ns) [0..] (map snd fs))) []
   where
     prod x y = conE '(:*:) `appE` x `appE` y
+fromCon wrap ns m i (InfixC t1 n t2) =
+  fromCon wrap ns m i (NormalC n [t1,t2])
 
 toCon :: (Q Pat -> Q Pat) -> [Name] -> Int -> Int -> Con -> Q Clause
 toCon wrap ns m i (NormalC n fs) =
@@ -171,6 +201,8 @@ toCon wrap ns m i (NormalC n fs) =
       (normalB $ foldl appE (conE n) (map (varE . field) [0..length fs - 1])) []
   where
     prod x y = conP '(:*:) [x,y]
+toCon wrap ns m i (InfixC t1 n t2) =
+  toCon wrap ns m i (NormalC n [t1,t2])
 
 fromField :: [Name] -> Int -> Type -> Q Exp
 fromField ns nr t@(ConT n) | n `elem` ns = conE 'I `appE` (conE 'I0 `appE` varE (field nr))

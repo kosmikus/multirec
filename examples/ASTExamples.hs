@@ -7,7 +7,11 @@ import Data.Maybe (fromJust)
 import Control.Arrow ((>>>))
 import Control.Monad ((>=>))
 
+-- Replace ASTUse with ASTTHUse below if you want
+-- to test TH code generation.
 import AST
+import ASTUse
+-- import ASTTHUse
 
 import Generics.MultiRec.Base
 import Generics.MultiRec.Compos
