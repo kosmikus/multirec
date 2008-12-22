@@ -48,7 +48,7 @@ deriveConstructors =
 deriveSystem :: Name -> [Name] -> String -> Q [Dec]
 deriveSystem n ns pfn =
   do
-    pf <- derivePF "PFAST" ns
+    pf <- derivePF pfn ns
     ix <- deriveIx n ns
     return $ pf ++ ix
 
