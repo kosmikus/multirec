@@ -18,6 +18,7 @@
 --   ICFP 2006
 --
 -----------------------------------------------------------------------------
+
 module Generics.MultiRec.Compos where
 
 import Control.Monad (liftM)
