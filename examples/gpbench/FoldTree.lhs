@@ -12,17 +12,17 @@ import Control.Applicative (Const(..))
 selectSalary :: Company -> [Salary]
 selectSalary c =
     let collectAlgebra :: Algebra CompanyU (Const [Salary])
-        collectAlgebra _ = tag (\(I (Const ds)) -> Const ds)
+        collectAlgebra _ = tag (con (\(I (Const ds)) -> Const ds))
                          & tag (\(K ()) -> Const [])
                          & tag (\(I (Const ds) :*: I (Const dss)) -> Const (ds ++ dss))
-                         & tag (\(_ :*: I (Const es) :*: I (Const uss)) ->  Const (es ++ uss))
+                         & tag (con (\(_ :*: I (Const es) :*: I (Const uss)) ->  Const (es ++ uss)))
                          & tag (\(K ()) -> Const [])
                          & tag (\(I (Const us) :*: I (Const uss)) -> Const (us ++ uss))
-                         & tag (\(I (Const es)) -> Const es)
-                         & tag (\(I (Const ds)) -> Const ds)
-                         & tag (\(I (Const ps) :*: I (Const ss)) -> Const (ps ++ ss))
-                         & tag (\_ -> Const [])
-                         & tag (\(K s) -> Const [S s])
+                         & tag (con (\(I (Const es)) -> Const es))
+                         & tag (con (\(I (Const ds)) -> Const ds))
+                         & tag (con (\(I (Const ps) :*: I (Const ss)) -> Const (ps ++ ss)))
+                         & tag (con (\_ -> Const []))
+                         & tag (con (\(K s) -> Const [S s]))
         (Const ss) = fold collectAlgebra c
     in ss
 
