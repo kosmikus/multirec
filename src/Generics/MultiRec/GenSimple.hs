@@ -3,7 +3,6 @@
            , KindSignatures
            , TypeFamilies
            , MultiParamTypeClasses
-           , ExistentialQuantification
            , RankNTypes
            , FlexibleContexts
            , EmptyDataDecls
@@ -15,9 +14,10 @@ import Data.Char (ord)
 -- The datatype I want to model as an example of a datatype with more than one type param
 data Tree a b = Leaf a | Branch (Tree a b) b (Tree a b) deriving Show
 
-data K a (es :: * -> * -> *) (r :: *) = K a
-data E a (es :: * -> * -> *) (r :: *) = forall e. E (es a e) e
-data I (es :: * -> * -> *) (r :: *) where
+data K a       (es :: * -> * -> *) (r :: *) = K a
+data E a       (es :: * -> * -> *) (r :: *) where
+    E :: (es a e) -> e -> E a es r
+data I         (es :: * -> * -> *) (r :: *) where
     I :: (EIx es r) => r -> I es r
 data (f :*: g) (es :: * -> * -> *) (r :: *) = f es r :*: g es r
 data (f :+: g) (es :: * -> * -> *) (r :: *) = L (f es r) | R (g es r)
