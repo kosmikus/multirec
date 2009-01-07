@@ -46,24 +46,23 @@ instance EIx (ParamS2 a b) (Tree a b) where
 
 class GMap (f :: (* -> * -> *) -> * -> *) where
     -- Dit werkt niet, want de laatste index van 'f' (de pattern functor) kan niet veranderen, en dus ook de parameters niet.
-    gmap :: (EIx es a, EIx es2 b) => (forall n. E n es a -> E n es2 b) -> (a -> b) -> f es a -> f es2 b
---    gmap :: (EIx es a, EIx es2 a) => (forall a b. es a -> a -> (es2 b, b)) -> f es a -> f es2 a
+    gmap' :: (EIx es a, EIx es2 b) => (forall n. E n es a -> E n es2 b) -> (a -> b) -> f es a -> f es2 b
 
 instance GMap (K a) where
-    gmap _ _ (K a) = K a
+    gmap' _ _ (K a) = K a
 
 instance GMap (E n) where
-    gmap f _ (E ix a) = f (E ix a)
+    gmap' f _ (E ix a) = f (E ix a)
 
 instance GMap I where
-    gmap _ g (I r) = I (g r) -- I (to $ gmap f $ from r)
+    gmap' _ g (I r) = I (g r) -- I (to $ gmap' f $ from r)
 
 instance (GMap f, GMap g) => GMap (f :+: g) where
-    gmap f g (L x) = L (gmap f g x)
-    gmap f g (R y) = R (gmap f g y)
+    gmap' f g (L x) = L (gmap' f g x)
+    gmap' f g (R y) = R (gmap' f g y)
 
 instance (GMap f, GMap g) => GMap (f :*: g) where
-    gmap f g (x :*: y) = gmap f g x :*: gmap f g y
+    gmap' f g (x :*: y) = gmap' f g x :*: gmap' f g y
 
 fromTree (Leaf a) = L (E Param1 a)
 fromTree (Branch l b r) = R (I l :*: E Param2 b :*: I r)
@@ -89,9 +88,10 @@ f2 :: E n (ParamS2 Char Bool) (Tree Char Bool) -> E n (ParamS2 Int String) (Tree
 f2 (E Param1 c) = E Param1 (ord c)
 f2 (E Param2 b) = E Param2 (if b then "yes" else "no")
 
-res = toTree $ gmap f2 g $ fromTree testTree
-  where
-    g = toTree . gmap f2 g . fromTree
+gmap :: (EIx es a, EIx es2 b, GMap (PF a), PF a ~ PF b) => (forall n. E n es a -> E n es2 b) -> a -> b
+gmap f = to . gmap' f (gmap f) . from
+
+res = gmap f2 testTree
 
 -- Dit werkt niet meer, vanwege het eerste type-argument van E.
 {-
