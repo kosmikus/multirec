@@ -38,6 +38,9 @@ instance HFunctor (I xi) where
 instance HFunctor (K x) where
   hmapA _ (K x)  = pure (K x)
 
+instance HFunctor U where
+  hmapA _ U = pure U
+
 instance (HFunctor f, HFunctor g) => HFunctor (f :+: g) where
   hmapA f (L x) = liftA L (hmapA f x)
   hmapA f (R y) = liftA R (hmapA f y)

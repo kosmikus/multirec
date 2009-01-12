@@ -38,6 +38,9 @@ instance HShow (I xi) where
 instance Show x => HShow (K x) where
   hShowsPrecAlg _ (K x) = K0 [\ n -> P.showsPrec n x]
 
+instance HShow U where
+  hShowsPrecAlg _ U = K0 []
+
 instance (HShow f, HShow g) => HShow (f :+: g) where
   hShowsPrecAlg ix (L x) = hShowsPrecAlg ix x
   hShowsPrecAlg ix (R y) = hShowsPrecAlg ix y

@@ -29,7 +29,7 @@
 module Generics.MultiRec.Base 
   (-- * Structure types
    I(..), unI,
-   K(..), (:+:)(..), (:*:)(..),
+   K(..), U(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
    C(..), unC,
 
@@ -63,6 +63,9 @@ unI (I x) = x
 
 -- | Represents constant types that do not belong to the system.
 data K a       (s :: * -> *) (r :: * -> *) ix = K {unK :: a}
+
+-- | Represents constructors without fields.
+data U         (s :: * -> *) (r :: * -> *) ix = U
 
 -- | Represents sums (choices between constructors).
 data (f :+: g) (s :: * -> *) (r :: * -> *) ix = L (f s r ix) | R (g s r ix)

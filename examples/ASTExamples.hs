@@ -60,7 +60,7 @@ evalAlgebra _ =
           )
   &  tag  (  con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
           &  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
-          &  con (\ (K ())                  -> DV id)
+          &  con (\ U                       -> DV id)
           )
   &  tag         (\ (K x)                   -> VV x)
 

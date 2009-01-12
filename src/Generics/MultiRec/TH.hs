@@ -134,7 +134,7 @@ pfType ns n =
 
 pfCon :: [Name] -> Con -> Q Type
 pfCon ns (NormalC n []) =
-    appT (appT (conT ''C) (conT $ mkName (nameBase n))) (conT ''K `appT` conT ''())
+    appT (appT (conT ''C) (conT $ mkName (nameBase n))) (conT ''U)
 pfCon ns (NormalC n fs) =
     appT (appT (conT ''C) (conT $ mkName (nameBase n))) (foldr1 prod (map (pfField ns . snd) fs))
   where
@@ -188,7 +188,7 @@ fromCon :: (Q Exp -> Q Exp) -> [Name] -> Int -> Int -> Con -> Q Clause
 fromCon wrap ns m i (NormalC n []) =
     clause
       [conP n []]
-      (normalB $ wrap $ lrE m i $ conE 'C `appE` (conE 'K `appE` conE '())) []
+      (normalB $ wrap $ lrE m i $ conE 'C `appE` (conE 'U)) []
 fromCon wrap ns m i (NormalC n fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
@@ -202,7 +202,7 @@ fromCon wrap ns m i (InfixC t1 n t2) =
 toCon :: (Q Pat -> Q Pat) -> [Name] -> Int -> Int -> Con -> Q Clause
 toCon wrap ns m i (NormalC n []) =
     clause
-      [wrap $ lrP m i $ conP 'C [conP 'K [conP '() []]]]
+      [wrap $ lrP m i $ conP 'C [conP 'U []]]
       (normalB $ conE n) []
 toCon wrap ns m i (NormalC n fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>

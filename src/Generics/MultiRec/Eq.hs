@@ -35,6 +35,9 @@ instance HEq (I xi) where
 instance Eq x => HEq (K x) where
   heq _ eq (K x1) (K x2) = x1 == x2
 
+instance HEq U where
+  heq _ eq U U = True
+
 instance (HEq f, HEq g) => HEq (f :+: g) where
   heq ix eq (L x1) (L x2) = heq ix eq x1 x2
   heq ix eq (R y1) (R y2) = heq ix eq y1 y2
