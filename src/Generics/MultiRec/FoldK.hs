@@ -87,4 +87,9 @@ type (f :-> g) (s :: * -> *) b ix = f s b ix -> g s b ix
 (f & g) (L x) = f x
 (f & g) (R x) = g x 
 
+tag :: AlgPart a s c ix -> AlgPart (a :>: ix) s c ix'
+tag f (Tag x) = f x
+
+con :: AlgPart a s b ix -> AlgPart (C c a) s b ix
+con f (C x) = f x
 
