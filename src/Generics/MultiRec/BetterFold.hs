@@ -5,6 +5,8 @@
 {-# LANGUAGE LiberalTypeSynonyms   #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Generics.MultiRec.BetterFold where
 
@@ -12,52 +14,69 @@ import Generics.MultiRec.Base
 import Generics.MultiRec.HFunctor
 
 type family Alg (f :: (* -> *) -> (* -> *) -> * -> *) 
-     :: (* -> *) ->      -- system s
-        (* -> *) ->      -- recursive positions r
-        (* -> *) ->      -- continuation k
-        * ->             -- index ix
-        * 
+                (s :: * -> *)      -- system
+                (r :: * -> *)      -- recursive positions
+                (ix :: *)          -- index
+                :: *
 
-type instance Alg (K a) = AlgK a
-type AlgK a (s :: * -> *) (r :: * -> *) k ix = a -> k ix
+type instance Alg (K a) (s :: * -> *) (r :: * -> *) ix = a -> r ix
 
-type instance Alg (I xi) = AlgI xi
-type AlgI xi (s :: * -> *) r k ix = r xi -> k ix
+type instance Alg U (s :: * -> *) (r :: * -> *) ix = r ix
 
-type instance Alg (f :+: g) = AlgS f g
-type AlgS f g s r k ix = (Alg f s r k ix, Alg g s r k ix)
+type instance Alg (I xi) (s :: * -> *) r ix = r xi -> r ix
 
-type instance Alg (f :*: g) = AlgP f g
-type AlgP f g s r k ix = Alg f s r (Alg g s r k) ix
+type instance Alg (f :+: g) s r ix = (Alg f s r ix, Alg g s r ix)
 
-type instance Alg (f :>: xi) = AlgT f xi
-type AlgT f xi s r k ix = Alg f s r k xi
+type instance Alg (K a :*: g) s r ix = a -> Alg g s r ix
 
-type Algebra s r = forall ix. Ix s ix => s ix -> Alg (PF s) s r r ix
+type instance Alg (I xi :*: g) s r ix = r xi -> Alg g s r ix
+
+type instance Alg (f :>: xi) s r ix = Alg f s r xi
+
+type instance Alg (C c f) s r ix = Alg f s r ix
+
+type Algebra s r = forall ix. Ix s ix => s ix -> Alg (PF s) s r ix
 
 class Fold (f :: (* -> *) -> (* -> *) -> * -> *) where
-  alg :: (Ix s ix) => s ix -> Alg f s r k ix -> f s r ix -> k ix
+  alg :: (Ix s ix) => Alg f s r ix -> f s r ix -> r ix
 
 instance Fold (K a) where
-  alg _ f (K x) = f x
+  alg f (K x) = f x
+
+instance Fold U where
+  alg f U     = f
 
 instance Fold (I xi) where
-  alg _ f (I x) = f x
+  alg f (I x) = f x
 
 instance (Fold f, Fold g) => Fold (f :+: g) where
-  alg _ (f, g) (L x) = alg index f x
-  alg _ (f, g) (R x) = alg index g x
+  alg (f, g) (L x) = alg f x
+  alg (f, g) (R x) = alg g x
 
-instance (Fold f, Fold g) => Fold (f :*: g) where
-  alg _ f (x :*: y) = alg index (alg index f x) y
+instance (Fold g) => Fold (K a :*: g) where
+  alg f (K x :*: y) = alg (f x) y
+
+instance (Fold g) => Fold (I xi :*: g) where
+  alg f (I x :*: y) = alg (f x) y
 
 instance (Fold f) => Fold (f :>: xi) where
-  alg _ f (Tag x) = alg index f x
+  alg f (Tag x) = alg f x
+
+instance (Fold f) => Fold (C c f) where
+  alg f (C x) = alg f x
+
+fold' :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
+         s ix ->
+         Algebra s r ->
+         ix -> r ix
+fold' ix f = (alg :: Alg (PF s) s r ix -> (PF s) s r ix -> r ix) (f ix) .
+             hmap (\ _ (I0 x) -> fold' index f x) .
+             from
 
 fold :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
         Algebra s r ->
         ix -> r ix
-fold f = alg (index :: s ix) (f index) . hmap (\ _ (I0 x) -> fold f x) . from
+fold = fold' index
 
 infixr 5 &
 (&) :: a -> b -> (a, b)
