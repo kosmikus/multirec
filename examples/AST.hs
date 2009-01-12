@@ -23,6 +23,7 @@ data Expr   =  Const  Int
 
 data Decl   =  Var := Expr
             |  Seq    Decl  Decl
+            |  None
   deriving Show
 
 type Var   =  String

@@ -21,7 +21,7 @@ import Generics.MultiRec.Show as GS
 
 -- | Example expression
 
-example = Let ("x" := Mul (Const 6) (Const 9))
+example = Let (Seq ("x" := Mul (Const 6) (Const 9)) None)
               (Add (EVar "x") (EVar "y"))
 
 -- | Renaming variables using 'compos'
@@ -60,6 +60,7 @@ evalAlgebra _ =
           )
   &  tag  (  con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
           &  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
+          &  con (\ (K ())                  -> DV id)
           )
   &  tag         (\ (K x)                   -> VV x)
 
