@@ -92,4 +92,3 @@ tag f (Tag x) = f x
 
 con :: AlgPart a s b ix -> AlgPart (C c a) s b ix
 con f (C x) = f x
-
