@@ -58,8 +58,8 @@ type instance PF LogicF  =
        :+:  C And   (I Logic :*: I Logic)
        :+:  C Or    (I Logic :*: I Logic)
        :+:  C Not   (I Logic)
-       :+:  C T     (K ())
-       :+:  C F     (K ())
+       :+:  C T     U
+       :+:  C F     U
       ) :>: Logic
 
 -- ** 'Ix' instances
@@ -72,8 +72,8 @@ instance Ix LogicF Logic where
   from_ (l1 :&&: l2)  = Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2)))))))
   from_ (l1 :||: l2)  = Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))
   from_ (Not l)       = Tag (R (R (R (R (R (L    (C (I (I0 l)))))))))
-  from_ T             = Tag (R (R (R (R (R (R (L (C (K ())))))))))
-  from_ F             = Tag (R (R (R (R (R (R (R (C (K ())))))))))
+  from_ T             = Tag (R (R (R (R (R (R (L (C U))))))))
+  from_ F             = Tag (R (R (R (R (R (R (R (C U))))))))
 
   to_ (Tag (L                   (C (K s))))                         = Var s
   to_ (Tag (R (L                (C (I (I0 l1) :*: I (I0 l2))))))    = l1 :->: l2
@@ -81,7 +81,7 @@ instance Ix LogicF Logic where
   to_ (Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2))))))))  = l1 :&&: l2
   to_ (Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))) = l1 :||: l2
   to_ (Tag (R (R (R (R (R (L    (C (I (I0 l))))))))))               = Not l
-  to_ (Tag (R (R (R (R (R (R (L (C (K ()))))))))))                  = T
-  to_ (Tag (R (R (R (R (R (R (R (C (K ()))))))))))                  = F
+  to_ (Tag (R (R (R (R (R (R (L (C U)))))))))                       = T
+  to_ (Tag (R (R (R (R (R (R (R (C U)))))))))                       = F
 
   index  =  Logic
