@@ -1,5 +1,5 @@
-multirec: Generic programming with systems of recursive datatypes
-=================================================================
+multirec-0.2: Generic programming with systems of recursive datatypes
+=====================================================================
 
 Many generic programs require information about the recursive positions
 of a datatype. Examples include the generic fold, generic rewriting or
@@ -14,37 +14,16 @@ points of systems of datatypes that may be mutually recursive. On top
 of this representations, generic functions such as the fold or the Zipper
 can then be defined.
 
-We expect that the library will be especially interesting for compiler
-writers, because ASTs are typically systems of mutually recursive datatypes,
-and with multirec it becomes easy to write generic functions on ASTs.
+Changelog (changes w.r.t. multirec-0.1)
+---------------------------------------
 
-The library is based on ideas described in the paper:
+* Constructor information and generic show (Generics.MultiRec.Show).
 
-  Alexey Rodriguez, Stefan Holdermans, Andres Löh, Johan Jeuring
-  Generic programming with fixed points for mutually recursive datatypes
-  Technical Report, Universiteit Utrecht
-  http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-019.pdf
+* Variants of fold (Generics.MultiRec.FoldAlg) that make the definition of
+  algebras significantly more convenient.
 
-Features
---------
-
-* Generalizes the fixed point view from single, regular datatypes to systems
-  of recursive datatypes.
-
-* Includes detailed examples: generic fold and generic compos, the latter
-  in the style of
-
-    Björn Bringert, Arne Ranta
-    A pattern for almost compositional functions
-    ICFP 2006
-  
-  The Zipper and generic rewriting for systems of datatypes 
-  will be released soon as separate libraries that build on multirec.
-
-* The generic compos functions do not require the user to modify
-  their existing systems of datatypes.
-
-* In its current form, this library does not support nested datatypes.
+* Template Haskell code to generate the boilerplate required to
+  instantiate this library to a system of datatypes.
 
 Requirements
 ------------
