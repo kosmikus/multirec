@@ -104,19 +104,19 @@ instance (Fold f) => Fold (C c f) where
 -- * Interface
 
 -- | Variant of fold that takes an additional witness argument.
-fold' :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
+fold_ :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
          s ix ->
          Algebra s r ->
          ix -> r ix
-fold' ix f = (alg :: Alg (PF s) s r ix -> (PF s) s r ix -> r ix) (f ix) .
-             hmap (\ _ (I0 x) -> fold' index f x) .
+fold_ ix f = (alg :: Alg (PF s) s r ix -> (PF s) s r ix -> r ix) (f ix) .
+             hmap (\ _ (I0 x) -> fold_ index f x) .
              from
 
 -- | Fold with convenient algebras.
 fold :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
         Algebra s r ->
         ix -> r ix
-fold = fold' index
+fold = fold_ index
 
 -- * Construction of algebras
 
