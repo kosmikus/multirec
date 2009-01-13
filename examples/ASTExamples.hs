@@ -15,7 +15,9 @@ import ASTUse
 
 import Generics.MultiRec.Base
 import Generics.MultiRec.Compos
-import Generics.MultiRec.Fold
+import qualified Generics.MultiRec.Fold as F
+import Generics.MultiRec.Fold (con, tag)
+import Generics.MultiRec.FoldAlg as FA
 import Generics.MultiRec.Eq
 import Generics.MultiRec.Show as GS
 
@@ -49,30 +51,61 @@ type Env = [(Var, Int)]
 
 -- | Algebra for evaluating an expression
 
-evalAlgebra :: Algebra AST Value
-evalAlgebra _ =  
+infixr 5 &.
+
+(&.) = (F.&)
+
+evalAlgebra1 :: F.Algebra AST Value
+evalAlgebra1 _ =  
  
-     tag  (  con (\ (K x)                   -> EV (const x))
-          &  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  +  y env))
-          &  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  *  y env))
-          &  con (\ (I (VV x))              -> EV (fromJust . lookup x))
-          &  con (\ (I (DV e) :*: I (EV x)) -> EV (\ env -> x (e env)))
-          )
-  &  tag  (  con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
-          &  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
-          &  con (\ U                       -> DV id)
-          )
-  &  tag         (\ (K x)                   -> VV x)
+      tag  (   con (\ (K x)                   -> EV (const x))
+           &.  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  +  y env))
+           &.  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  *  y env))
+           &.  con (\ (I (VV x))              -> EV (fromJust . lookup x))
+           &.  con (\ (I (DV e) :*: I (EV x)) -> EV (\ env -> x (e env)))
+           )
+  &.  tag  (   con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
+           &.  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
+           &.  con (\ U                       -> DV id)
+           )
+  &.  tag          (\ (K x)                   -> VV x)
+
+-- | More convenient algebra for evaluating an expression
+
+evalAlgebra2 :: FA.Algebra AST Value
+evalAlgebra2 _ =
+
+     (  (\ x             -> EV (const x))
+     &  (\ (EV x) (EV y) -> EV (\ env -> x env  +  y env))
+     &  (\ (EV x) (EV y) -> EV (\ env -> x env  *  y env))
+     &  (\ (VV x)        -> EV (fromJust . lookup x))
+     &  (\ (DV e) (EV x) -> EV (\ env -> x (e env)))
+     )
+  &  (  (\ (VV x) (EV v) -> DV (\ env -> (x, v env) : env ))
+     &  (\ (DV f) (DV g) -> DV (g . f))
+     &  (                   DV id)
+     )
+  &     (\ x             -> VV x)
 
 -- | Evaluator
 
-eval :: Expr -> Env -> Int
-eval x = let (EV f) = fold evalAlgebra x in f
+eval1 :: Expr -> Env -> Int
+eval1 x = let (EV f) = F.fold evalAlgebra1 x in f
 
--- | Test for 'eval'
+-- | Evaluator
 
-testEval :: Int
-testEval = eval example [("y", -12)] 
+eval2 :: Expr -> Env -> Int
+eval2 x = let (EV f) = FA.fold evalAlgebra2 x in f
+
+-- | Test for 'eval1'
+
+testEval1 :: Int
+testEval1 = eval1 example [("y", -12)] 
+
+-- | Test for 'eval2'
+
+testEval2 :: Int
+testEval2 = eval2 example [("y", -12)] 
 
 -- | Equality instance for 'Expr'
 
