@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.TH
--- Copyright   :  (c) 2008 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2009 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -43,7 +43,9 @@ deriveConstructors =
 -- | Given the name of the index GADT, the names of the
 -- types in the system, and the name (as string) for the
 -- pattern functor to derive, generate the 'Ix' and 'PF'
--- instances.
+-- instances. /IMPORTANT/: It is assumed that the constructors
+-- of the GADT have the same names as the datatypes in the
+-- family.
 
 deriveSystem :: Name -> [Name] -> String -> Q [Dec]
 deriveSystem n ns pfn =
