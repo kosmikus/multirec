@@ -48,6 +48,7 @@ exposed-modules:	Generics.MultiRec
                         Generics.MultiRec.TH
 
 			-- Generic functions
+			Generics.MultiRec.ConNames
 			Generics.MultiRec.HFunctor
 			Generics.MultiRec.Fold
 			Generics.MultiRec.FoldK
