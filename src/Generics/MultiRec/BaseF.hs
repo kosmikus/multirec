@@ -31,10 +31,10 @@ module Generics.MultiRec.BaseF
    I(..), unI,
    K(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
-   E(..),
+   E(..), Comp(..),
 
    -- ** Unlifted variants
-   I0(..), K0(..),
+   I0(..), I0F (..), K0(..),
 
    -- * Indexed systems
    PF, Str, Ix(..),
@@ -44,25 +44,13 @@ module Generics.MultiRec.BaseF
   ) where
 
 import Control.Applicative
+import Generics.MultiRec.Base (I0 (..))
 
 -- * Structure types
 
 infixr 5 :+:
 infix  6 :>:
 infixr 7 :*:
-
-data ListU :: (* -> *) -> * where
-    List :: ListU []
-
-type instance PF ListU = K () :>: []
-                     :+: E :*: I [] :>: []
-
-instance Ix ListU [] where
-    from_ [] = L (Tag (K ()))
-    from_ (x : xs) = R (Tag (E x :*: I (I0 xs)))
-    to_ (L (Tag (K ()))) = []
-    to_ (R (Tag (E x :*: I (I0 xs)))) = x : xs
-    index = List
 
 -- | Represents recursive positions. The first argument indicates
 -- which type (within the system) to recurse on.
@@ -78,6 +66,9 @@ data K a       (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) =
 
 -- | Represents element types that do not belong to the system.
 data E (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = E {unE :: e}
+
+-- | Composition of two functors.
+data Comp f (s' :: (* -> *) -> *) (ix' :: * -> *) g (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = Comp (f s' I0F (g s r e ix) ix')
 
 -- | Represents sums (choices between constructors).
 data (f :+: g) (s :: (* -> *) -> *) (r :: * -> (* -> *) -> *) e (ix :: * -> *) = L (f s r e ix) | R (g s r e ix)
@@ -97,7 +88,7 @@ unTag (Tag x) = x
 -- ** Unlifted variants
 
 -- | Unlifted version of 'I'.
-newtype I0 e a   = I0 { unI0 :: a e}
+newtype I0F e a   = I0F { unI0F :: a e}
 
 -- | Unlifted version of 'K'.
 newtype K0 a b = K0 { unK0 :: a }
@@ -115,7 +106,7 @@ instance Applicative I0 where
 
 -- | Type family describing the pattern functor of a system.
 type family PF s :: ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> *
-type Str s e ix = (PF s) s I0 e ix
+type Str s e ix = (PF s) s I0F e ix
 
 class Ix s ix where
   from_ :: ix e -> Str s e ix
@@ -125,9 +116,9 @@ class Ix s ix where
   -- that use them typable.  Desugaring consists in transforming ``inline'' type
   -- family applications into equality constraints. This is a strangeness in current
   -- versions of GHC that hopefully will be fixed sometime in the future.
-  from  :: (pfs ~ PF s) => ix e -> pfs s I0 e ix
+  from  :: (pfs ~ PF s) => ix e -> pfs s I0F e ix
   from = from_
-  to    :: (pfs ~ PF s) => pfs s I0 e ix -> ix e
+  to    :: (pfs ~ PF s) => pfs s I0F e ix -> ix e
   to = to_
 
   index :: s ix

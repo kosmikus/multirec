@@ -30,19 +30,19 @@ type Algebra s r = forall e ix. Ix s ix => s ix -> PF s s r e ix -> r e ix
 
 fold :: (Ix s ix, HFunctor (PF s)) =>
         Algebra s r -> ix e -> r e ix
-fold f = f index . hmap (\ _ (I0 x) -> fold f x) . from
+fold f = f index . hmap (\ _ (I0F x) -> fold f x) . from
 
 type CoAlgebra s r = forall e ix. Ix s ix => s ix -> r e ix -> PF s s r e ix
 
 unfold :: (Ix s ix, HFunctor (PF s)) =>
           CoAlgebra s r -> r e ix -> ix e
-unfold f = to . hmap (\ _ x -> I0 (unfold f x)) . f index
+unfold f = to . hmap (\ _ x -> I0F (unfold f x)) . f index
 
 type ParaAlgebra s r = forall e ix. Ix s ix => s ix -> PF s s r e ix -> ix e -> r e ix
 
 para :: (Ix s ix, HFunctor (PF s)) => 
         ParaAlgebra s r -> ix e -> r e ix
-para f x = f index (hmap (\ _ (I0 x) -> para f x) (from x)) x
+para f x = f index (hmap (\ _ (I0F x) -> para f x) (from x)) x
 
 -- * Creating an algebra
 

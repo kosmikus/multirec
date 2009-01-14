@@ -5,29 +5,33 @@
            #-}
 module Generics.MultiRec.GMap where
 
+import Control.Applicative
 import Generics.MultiRec.BaseF
 
 class GMap (f :: ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) -> *) where
-    gmap' :: s ix -> (forall ix. Ix s ix => s ix -> r e ix -> r e' ix) -> (e -> e') -> f s r e ix -> f s r e' ix
+    gmapA' :: (Applicative a) => s ix -> (forall ix. Ix s ix => s ix -> r e ix -> a (r e' ix)) -> (e -> a e') -> f s r e ix -> a (f s r e' ix)
 
 instance GMap (I xi) where
-    gmap' ix g f (I xi) = I (g index xi)
+    gmapA' ix g f (I xi) = I <$> (g index xi)
 
 instance GMap E where
-    gmap' _ _ f (E e) = E (f e)
+    gmapA' _ _ f (E e) = E <$> (f e)
 
 instance GMap (K x) where
-    gmap' _ _ _ (K x) = K x
+    gmapA' _ _ _ (K x) = pure $ K x
 
 instance (GMap f, GMap g) => GMap (f :+: g) where
-    gmap' ix g f (L x) = L (gmap' ix g f x)
-    gmap' ix g f (R x) = R (gmap' ix g f x)
+    gmapA' ix g f (L x) = L <$> (gmapA' ix g f x)
+    gmapA' ix g f (R x) = R <$> (gmapA' ix g f x)
 
 instance (GMap f, GMap g) => GMap (f :*: g) where
-    gmap' ix g f (x :*: y) = (gmap' ix g f x) :*: (gmap' ix g f y)
+    gmapA' ix g f (x :*: y) = (:*:) <$> (gmapA' ix g f x) <*> (gmapA' ix g f y)
 
 instance (GMap f) => GMap (f :>: t) where
-    gmap' ix g f (Tag x) = Tag (gmap' ix g f x)
+    gmapA' ix g f (Tag x) = Tag <$> (gmapA' ix g f x)
+
+gmapA :: (Ix s ix, GMap (PF s), Applicative f) => s ix -> (a -> f b) -> ix a -> f (ix b)
+gmapA ix f x = to <$> (gmapA' ix (\ix (I0F r) -> I0F <$> gmapA ix f r) f $ from x)
 
 gmap :: (Ix s ix, GMap (PF s)) => s ix -> (a -> b) -> ix a -> ix b
-gmap ix f x = to $ gmap' ix (\ix (I0 r) -> I0 $ gmap ix f r) f $ from x
+gmap ix f = to . unI0 . gmapA' ix (\ix (I0F r) -> I0 $ I0F $ gmap ix f r) (I0 . f) . from

@@ -50,7 +50,7 @@ instance HEq f => HEq (f :>: ix) where
   heq ix eq eqE (Tag x1) (Tag x2) = heq ix eq eqE x1 x2
 
 eq :: (Ix s ix, HEq (PF s), Eq e) => s ix -> ix e -> ix e -> Bool
-eq ix x1 x2 = heq ix (\ ix (I0 x1) (I0 x2) -> eq ix x1 x2) (==) (from x1) (from x2)
+eq ix x1 x2 = heq ix (\ ix (I0F x1) (I0F x2) -> eq ix x1 x2) (==) (from x1) (from x2)
 
 -- Note:
 -- 

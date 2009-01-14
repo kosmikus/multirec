@@ -2,6 +2,7 @@
            , RankNTypes
            , TypeOperators
            , KindSignatures
+           , FlexibleContexts
            #-}
 
 -----------------------------------------------------------------------------
@@ -20,10 +21,10 @@
 module Generics.MultiRec.HFunctorF where
 
 import Control.Monad (liftM, liftM2)
-import Control.Applicative (Applicative(..), liftA, liftA2, WrappedMonad(..))
+import Control.Applicative ((<$>), Applicative(..), liftA, liftA2, WrappedMonad(..))
 
 import Generics.MultiRec.BaseF
-import qualified Generics.MultiRec.Base as Base
+import Generics.MultiRec.GMap
 
 -- * Generic map
 
@@ -40,6 +41,12 @@ instance HFunctor (I xi) where
 
 instance HFunctor (K x) where
   hmapA _ (K x)  = pure (K x)
+
+instance HFunctor E where
+  hmapA f (E e) = pure (E e)
+
+instance (Ix s' ix', HFunctor g, GMap f, GMap (PF s')) => HFunctor (Comp f s' ix' g) where
+  hmapA f (Comp x) = liftA Comp $ gmapA' index (\ix (I0F r) -> I0F <$> gmapA ix (hmapA f) r) (hmapA f) x
 
 instance (HFunctor f, HFunctor g) => HFunctor (f :+: g) where
   hmapA f (L x) = liftA L (hmapA f x)
@@ -60,7 +67,7 @@ instance HFunctor f => HFunctor (f :>: ix) where
 hmap  :: (HFunctor f) =>
          (forall ix. Ix s ix => s ix -> r e ix -> r' e ix) ->
          f s r e ix -> f s r' e ix
-hmap f x = Base.unI0 (hmapA (\ ix x -> Base.I0 (f ix x)) x)
+hmap f x = unI0 (hmapA (\ ix x -> I0 (f ix x)) x)
 
 -- | Monadic version of 'hmap'.
 hmapM :: (HFunctor f, Monad m) =>
