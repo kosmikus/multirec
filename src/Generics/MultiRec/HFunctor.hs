@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.HFunctor
--- Copyright   :  (c) 2008 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2009 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -37,6 +37,9 @@ instance HFunctor (I xi) where
 
 instance HFunctor (K x) where
   hmapA _ (K x)  = pure (K x)
+
+instance HFunctor U where
+  hmapA _ U = pure U
 
 instance (HFunctor f, HFunctor g) => HFunctor (f :+: g) where
   hmapA f (L x) = liftA L (hmapA f x)

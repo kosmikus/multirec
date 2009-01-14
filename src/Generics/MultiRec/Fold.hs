@@ -9,7 +9,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.Fold
--- Copyright   :  (c) 2008 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2009 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -18,6 +18,14 @@
 --
 -- The definition of generic fold, unfold, paramorphisms. In addition,
 -- some combinators that facilitate the construction of algebras.
+--
+-- There are several variants of fold in other modules that are probably
+-- easier to use:
+--
+--   * for folds with constant return type, look at 
+--     "Generics.MultiRec.FoldAlgK" (or "Generics.MultiRec.FoldK"),
+--
+--   * for other folds, look at "Generics.MultiRec.FoldAlg".
 --
 -----------------------------------------------------------------------------
 

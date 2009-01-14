@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.Eq
--- Copyright   :  (c) 2008 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2009 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -34,6 +34,9 @@ instance HEq (I xi) where
 -- equality function.
 instance Eq x => HEq (K x) where
   heq _ eq (K x1) (K x2) = x1 == x2
+
+instance HEq U where
+  heq _ eq U U = True
 
 instance (HEq f, HEq g) => HEq (f :+: g) where
   heq ix eq (L x1) (L x2) = heq ix eq x1 x2

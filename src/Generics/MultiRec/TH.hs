@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.TH
--- Copyright   :  (c) 2008 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2009 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -43,7 +43,9 @@ deriveConstructors =
 -- | Given the name of the index GADT, the names of the
 -- types in the system, and the name (as string) for the
 -- pattern functor to derive, generate the 'Ix' and 'PF'
--- instances.
+-- instances. /IMPORTANT/: It is assumed that the constructors
+-- of the GADT have the same names as the datatypes in the
+-- family.
 
 deriveSystem :: Name -> [Name] -> String -> Q [Dec]
 deriveSystem n ns pfn =
@@ -133,6 +135,8 @@ pfType ns n =
     sum a b = conT ''(:+:) `appT` a `appT` b
 
 pfCon :: [Name] -> Con -> Q Type
+pfCon ns (NormalC n []) =
+    appT (appT (conT ''C) (conT $ mkName (nameBase n))) (conT ''U)
 pfCon ns (NormalC n fs) =
     appT (appT (conT ''C) (conT $ mkName (nameBase n))) (foldr1 prod (map (pfField ns . snd) fs))
   where
@@ -183,6 +187,10 @@ mkIndex n =
   funD 'index [clause [] (normalB (conE (mkName (nameBase n)))) []]
 
 fromCon :: (Q Exp -> Q Exp) -> [Name] -> Int -> Int -> Con -> Q Clause
+fromCon wrap ns m i (NormalC n []) =
+    clause
+      [conP n []]
+      (normalB $ wrap $ lrE m i $ conE 'C `appE` (conE 'U)) []
 fromCon wrap ns m i (NormalC n fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
@@ -194,6 +202,10 @@ fromCon wrap ns m i (InfixC t1 n t2) =
   fromCon wrap ns m i (NormalC n [t1,t2])
 
 toCon :: (Q Pat -> Q Pat) -> [Name] -> Int -> Int -> Con -> Q Clause
+toCon wrap ns m i (NormalC n []) =
+    clause
+      [wrap $ lrP m i $ conP 'C [conP 'U []]]
+      (normalB $ conE n) []
 toCon wrap ns m i (NormalC n fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause

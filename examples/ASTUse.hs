@@ -38,6 +38,8 @@ instance Constructor Assign where
   conFixity _ = Infix NotAssociative 1
 data Seq
 instance Constructor Seq   where conName _ = "Seq"
+data None
+instance Constructor None  where conName _ = "None"
 
 -- ** Functor encoding
 
@@ -57,6 +59,7 @@ type instance PF AST  =
       ) :>: Expr
   :+: (     C Assign  (I Var  :*: I Expr)
        :+:  C Seq     (I Decl :*: I Decl)
+       :+:  C None    U
       ) :>: Decl
   :+: (               (K String)
       ) :>: Var
@@ -81,11 +84,13 @@ instance Ix AST Expr where
 
 instance Ix AST Decl where
 
-  from_ (x := e)   =  R (L (Tag (L (C (I (I0 x) :*: I (I0 e))))))
-  from_ (Seq c d)  =  R (L (Tag (R (C (I (I0 c) :*: I (I0 d))))))
+  from_ (x := e)   =  R (L (Tag (L    (C (I (I0 x) :*: I (I0 e))))))
+  from_ (Seq c d)  =  R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d)))))))
+  from_ (None)     =  R (L (Tag (R (R (C U)))))
 
-  to_ (R (L (Tag (L (C (I (I0 x) :*: I (I0 e)))))))  =  x := e
-  to_ (R (L (Tag (R (C (I (I0 c) :*: I (I0 d)))))))  = Seq c d
+  to_ (R (L (Tag (L    (C (I (I0 x) :*: I (I0 e)))))))   =  x := e
+  to_ (R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d))))))))  = Seq c d
+  to_ (R (L (Tag (R (R (C U))))))                        = None
 
   index  =  Decl
 
