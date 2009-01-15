@@ -37,6 +37,9 @@ instance Eq x => HEq (K x) where
 instance HEq E where
   heq _ eq eqE (E e1) (E e2) = e1 `eqE` e2
 
+instance (HEq f, HEq g, Ix s' ix', HEq (PF s')) => HEq (Comp f s' ix' g) where
+  heq ix eq eqE (Comp x1) (Comp x2) = heq index (\ix' (I0F i1) (I0F i2) -> eqBy (heq ix eq eqE) ix' i1 i2) (heq ix eq eqE) x1 x2
+
 instance (HEq f, HEq g) => HEq (f :+: g) where
   heq ix eq eqE (L x1) (L x2) = heq ix eq eqE x1 x2
   heq ix eq eqE (R y1) (R y2) = heq ix eq eqE y1 y2
@@ -49,8 +52,11 @@ instance (HEq f, HEq g) => HEq (f :*: g) where
 instance HEq f => HEq (f :>: ix) where
   heq ix eq eqE (Tag x1) (Tag x2) = heq ix eq eqE x1 x2
 
+eqBy :: (Ix s ix, HEq (PF s)) => (e -> e -> Bool) -> s ix -> ix e -> ix e -> Bool
+eqBy eqE ix x1 x2 = heq ix (\ix (I0F x1) (I0F x2) -> eqBy eqE ix x1 x2) eqE (from x1) (from x2)
+
 eq :: (Ix s ix, HEq (PF s), Eq e) => s ix -> ix e -> ix e -> Bool
-eq ix x1 x2 = heq ix (\ ix (I0F x1) (I0F x2) -> eq ix x1 x2) (==) (from x1) (from x2)
+eq = eqBy (==)
 
 -- Note:
 -- 

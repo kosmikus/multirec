@@ -19,6 +19,8 @@
 module Generics.MultiRec.Eq where
 
 import Generics.MultiRec.Base
+import qualified Generics.MultiRec.BaseF as F
+import qualified Generics.MultiRec.EqF as EqF
 
 -- * Generic equality
 
@@ -37,6 +39,9 @@ instance Eq x => HEq (K x) where
 
 instance HEq U where
   heq _ eq U U = True
+
+instance (EqF.HEq f, HEq g, F.Ix s' ix', EqF.HEq (F.PF s')) => HEq (Comp f s' ix' g) where
+  heq ix eq (Comp x1) (Comp x2) = EqF.heq F.index (\ix' (I0F i1) (I0F i2) -> EqF.eqBy (heq ix eq) ix' i1 i2) (heq ix eq) x1 x2
 
 instance (HEq f, HEq g) => HEq (f :+: g) where
   heq ix eq (L x1) (L x2) = heq ix eq x1 x2
