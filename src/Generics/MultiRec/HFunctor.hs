@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs         #-}
 {-# LANGUAGE RankNTypes    #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -18,9 +19,11 @@
 module Generics.MultiRec.HFunctor where
 
 import Control.Monad (liftM, liftM2)
-import Control.Applicative (Applicative(..), liftA, liftA2, WrappedMonad(..))
+import Control.Applicative ((<$>), Applicative(..), liftA, liftA2, WrappedMonad(..))
 
 import Generics.MultiRec.Base
+import qualified Generics.MultiRec.BaseF as F
+import Generics.MultiRec.GMap
 
 -- * Generic map
 
@@ -40,6 +43,9 @@ instance HFunctor (K x) where
 
 instance HFunctor U where
   hmapA _ U = pure U
+
+instance (F.Ix s' ix', HFunctor g, GMap f, GMap (F.PF s')) => HFunctor (Comp f s' ix' g) where
+  hmapA f (Comp x) = Comp <$> gmapA' F.index (\ix (I0F r) -> I0F <$> gmapA ix (hmapA f) r) (hmapA f) x
 
 instance (HFunctor f, HFunctor g) => HFunctor (f :+: g) where
   hmapA f (L x) = liftA L (hmapA f x)

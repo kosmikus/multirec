@@ -44,7 +44,7 @@ module Generics.MultiRec.BaseF
   ) where
 
 import Control.Applicative
-import Generics.MultiRec.Base (I0 (..))
+import Generics.MultiRec.Base (I0 (..), I0F (..))
 
 -- * Structure types
 
@@ -86,9 +86,6 @@ unTag :: (f :>: ix) s r e ix -> f s r e ix
 unTag (Tag x) = x
 
 -- ** Unlifted variants
-
--- | Unlifted version of 'I'.
-newtype I0F e a   = I0F { unI0F :: a e}
 
 -- | Unlifted version of 'K'.
 newtype K0 a b = K0 { unK0 :: a }

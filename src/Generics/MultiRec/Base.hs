@@ -29,7 +29,7 @@
 module Generics.MultiRec.Base 
   (-- * Structure types
    I(..), unI,
-   K(..), U(..), (:+:)(..), (:*:)(..),
+   K(..), U(..), Comp(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
    C(..), unC,
 
@@ -37,7 +37,7 @@ module Generics.MultiRec.Base
    module Generics.MultiRec.Constructor,
 
    -- ** Unlifted variants
-   I0(..), K0(..),
+   I0(..), I0F(..), K0(..),
 
    -- * Indexed systems
    PF, Str, Ix(..),
@@ -70,6 +70,10 @@ data K a       (s :: * -> *) (r :: * -> *) ix = K {unK :: a}
 -- | Represents constructors without fields.
 data U         (s :: * -> *) (r :: * -> *) ix = U
 
+-- | Composition of two functors. The outer functor is from BaseF, the
+-- inner from Base.
+data Comp f (s' :: (* -> *) -> *) (ix' :: * -> *) g (s :: * -> *) (r :: * -> *) ix = Comp (f s' I0F (g s r ix) ix')
+
 -- | Represents sums (choices between constructors).
 data (f :+: g) (s :: * -> *) (r :: * -> *) ix = L (f s r ix) | R (g s r ix)
 
@@ -97,6 +101,9 @@ unC (C x) = x
 
 -- | Unlifted version of 'I'.
 newtype I0 a   = I0 { unI0 :: a }
+
+-- | Unlifted version of 'I' with extra type argument.
+newtype I0F e a   = I0F { unI0F :: a e}
 
 -- | Unlifted version of 'K'.
 newtype K0 a b = K0 { unK0 :: a }

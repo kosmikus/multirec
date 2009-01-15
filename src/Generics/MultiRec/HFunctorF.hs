@@ -20,8 +20,7 @@
 -----------------------------------------------------------------------------
 module Generics.MultiRec.HFunctorF where
 
-import Control.Monad (liftM, liftM2)
-import Control.Applicative ((<$>), Applicative(..), liftA, liftA2, WrappedMonad(..))
+import Control.Applicative ((<$>), Applicative(..), WrappedMonad(..))
 
 import Generics.MultiRec.BaseF
 import Generics.MultiRec.GMap
@@ -37,7 +36,7 @@ class HFunctor (f :: ((* -> *) -> *) -> (* -> (* -> *) -> *) -> * -> (* -> *) ->
            f s r e ix -> a (f s r' e ix)
 
 instance HFunctor (I xi) where
-  hmapA f (I x) = liftA I (f index x)
+  hmapA f (I x) = I <$> f index x
 
 instance HFunctor (K x) where
   hmapA _ (K x)  = pure (K x)
@@ -46,17 +45,17 @@ instance HFunctor E where
   hmapA f (E e) = pure (E e)
 
 instance (Ix s' ix', HFunctor g, GMap f, GMap (PF s')) => HFunctor (Comp f s' ix' g) where
-  hmapA f (Comp x) = liftA Comp $ gmapA' index (\ix (I0F r) -> I0F <$> gmapA ix (hmapA f) r) (hmapA f) x
+  hmapA f (Comp x) = Comp <$> gmapA' index (\ix (I0F r) -> I0F <$> gmapA ix (hmapA f) r) (hmapA f) x
 
 instance (HFunctor f, HFunctor g) => HFunctor (f :+: g) where
-  hmapA f (L x) = liftA L (hmapA f x)
-  hmapA f (R y) = liftA R (hmapA f y)
+  hmapA f (L x) = L <$> hmapA f x
+  hmapA f (R y) = R <$> hmapA f y
 
 instance (HFunctor f, HFunctor g) => HFunctor (f :*: g) where
-  hmapA f (x :*: y) = liftA2 (:*:) (hmapA f x) (hmapA f y)
+  hmapA f (x :*: y) = (:*:) <$> (hmapA f x) <*> (hmapA f y)
 
 instance HFunctor f => HFunctor (f :>: ix) where
-  hmapA f (Tag x) = liftA Tag (hmapA f x)
+  hmapA f (Tag x) = Tag <$> (hmapA f x)
 
 -- | The function 'hmap' takes a functor @f@. All the recursive instances
 -- in that functor are wrapped by an application of @r@. The argument to
