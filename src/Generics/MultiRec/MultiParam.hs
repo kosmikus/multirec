@@ -7,7 +7,7 @@
            , FlexibleContexts
            , EmptyDataDecls
            #-}
-module Simple where
+module MultiParam where
 
 import Data.Char (ord)
 
