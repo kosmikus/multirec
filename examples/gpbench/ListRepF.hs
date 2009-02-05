@@ -16,7 +16,7 @@ type instance PF (ListU) = K () :>: []
 
 instance Ix ListU [] where
     from_ [] = L (Tag (K ()))
-    from_ (x : xs) = R (Tag (E x :*: I (I0 xs)))
+    from_ (x : xs) = R (Tag (E x :*: I (I0F xs)))
     to_ (L (Tag (K ()))) = []
-    to_ (R (Tag (E x :*: I (I0 xs)))) = x : xs
+    to_ (R (Tag (E x :*: I (I0F xs)))) = x : xs
     index = List
