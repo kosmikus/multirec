@@ -11,13 +11,12 @@ module Simple where
 
 import Data.Char (ord)
 
-data K a       (es :: * -> * -> *) (r :: *) = K a
-data E a       (es :: * -> * -> *) (r :: *) where
+data K a       (es :: * -> * -> *) r = K a
+data E a       (es :: * -> * -> *) r where
     E :: (es a e) -> e -> E a es r
-data I         (es :: * -> * -> *) (r :: *) where
-    I :: (EIx es r) => r -> I es r
-data (f :*: g) (es :: * -> * -> *) (r :: *) = f es r :*: g es r
-data (f :+: g) (es :: * -> * -> *) (r :: *) = L (f es r) | R (g es r)
+data I         (es :: * -> * -> *) r = I r
+data (f :*: g) (es :: * -> * -> *) r = f es r :*: g es r
+data (f :+: g) (es :: * -> * -> *) r = L (f es r) | R (g es r)
 
 infixr 7 :*:
 infixr 6 :+:
@@ -39,8 +38,7 @@ class EIx es a where
     to :: PF a es a -> a
 
 class GMap (f :: (* -> * -> *) -> * -> *) where
-    -- Dit werkt niet, want de laatste index van 'f' (de pattern functor) kan niet veranderen, en dus ook de parameters niet.
-    gmap' :: (EIx es a, EIx es2 b) => (forall n. E n es a -> E n es2 b) -> (a -> b) -> f es a -> f es2 b
+    gmap' :: (forall n. E n es a -> E n es2 b) -> (a -> b) -> f es a -> f es2 b
 
 instance GMap (K a) where
     gmap' _ _ (K a) = K a
