@@ -27,7 +27,11 @@ instance HGen (K [a]) s where
     hgen n ix f = [K []]
 
 instance HGen (K ()) s where
+    hgen 0 _ _ = []
     hgen n ix f = [K ()]
+
+instance HGen U s where
+    hgen n ix f = [U]
 
 instance HGen (K Float) s where
     hgen 0 _ _ = []
