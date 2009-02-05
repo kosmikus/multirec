@@ -31,6 +31,9 @@ f2 (E1 b) = E1 (if b then "yes" else "no")
 treeTest :: Tree Int String
 treeTest = gmap f2 testTree
 
+-- we can also use the specialized map for two element data types:
+treeTest' = bimap ord (\b -> if b then "yes" else "no") testTree
+
 -- Dit werkt niet, vanwege het laatste type-argument van ParamS2.
 {-
 f4 :: Elems Char Bool n -> Elems String Int n

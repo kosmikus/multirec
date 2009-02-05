@@ -4,6 +4,7 @@
            #-}
 module MultiParam.List where
 
+import Prelude hiding (map)
 import MultiParam.One
 import Data.Char (ord)
 
@@ -24,3 +25,6 @@ f3 (E0 c) = E0 (ord c)
 
 listTest :: [Int] -- Needs a type signature due to the monomorphism restriction
 listTest = gmap f3 "test"
+
+-- we can also use the specialized map for one element data types:
+listTest' = map ord "test"
