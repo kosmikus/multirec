@@ -40,11 +40,16 @@ module Generics.MultiRec.Base
    I0(..), K0(..),
 
    -- * Indexed systems
-   PF, Str, Ix(..)
+   PF, Str, Ix(..),
+
+   -- ** Equality for indexed systems
+   module Generics.MultiRec.TEq,
+   EqS(..)
   ) where
 
 import Control.Applicative
 import Generics.MultiRec.Constructor
+import Generics.MultiRec.TEq
 
 -- * Structure types
 
@@ -114,6 +119,7 @@ instance Functor (K0 a) where
 type family PF s :: (* -> *) -> (* -> *) -> * -> *
 type Str s ix = (PF s) s I0 ix
 
+-- | Class that relates the types of a system.
 class Ix s ix where
   from_ :: ix -> Str s ix
   to_   :: Str s ix -> ix
@@ -128,3 +134,8 @@ class Ix s ix where
   to = to_
 
   index :: s ix
+
+-- | Semi-decidable equality for types of a system.
+class EqS s where
+  eqS :: s ix -> s ix' -> Maybe (ix :=: ix')
+
