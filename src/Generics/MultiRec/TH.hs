@@ -24,7 +24,8 @@ module Generics.MultiRec.TH
   ( deriveConstructors,
     deriveSystem,
     derivePF,
-    deriveIx
+    deriveIx,
+    deriveEqS
   ) where
 
 import Generics.MultiRec.Base
@@ -52,7 +53,8 @@ deriveSystem n ns pfn =
   do
     pf <- derivePF pfn ns
     ix <- deriveIx n ns
-    return $ pf ++ ix
+    eq <- deriveEqS n (map (mkName . nameBase) ns)
+    return $ pf ++ ix ++ eq
 
 -- | Derive only the 'PF' instance. Not needed if 'deriveSystem'
 -- is used.
@@ -71,6 +73,18 @@ derivePF pfn ns =
 deriveIx :: Name -> [Name] -> Q [Dec]
 deriveIx s ns =
   zipWithM (ixInstance s ns (length ns)) [0..] ns
+
+-- | Derive only the 'EqS' instances. Not needed if 'deriveSystem'
+-- is used.
+
+deriveEqS :: Name -> [Name] -> Q [Dec]
+deriveEqS s ns =
+    liftM (:[]) $
+    instanceD (cxt []) (conT ''EqS `appT` conT s)
+      [funD 'eqS (map trueClause ns ++ [falseClause])]
+  where
+    trueClause n = clause [conP n [], conP n []] (normalB (conE 'Just `appE` conE 'Refl)) []
+    falseClause  = clause [wildP,  wildP]        (normalB (conE 'Nothing)) []
 
 constrInstance :: Name -> Q [Dec]
 constrInstance n =
