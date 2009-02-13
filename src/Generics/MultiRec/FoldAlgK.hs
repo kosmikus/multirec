@@ -56,7 +56,7 @@ type instance Alg (K a :*: g) s r = a -> Alg g s r
 --   take the recursive result as an additional argument.
 type instance Alg (I xi :*: g) s r = r -> Alg g s r
 
--- | A tag changes the index of the final result.
+-- | Tags are ignored.
 type instance Alg (f :>: xi) s r = Alg f s r
 
 -- | Constructors are ignored.
