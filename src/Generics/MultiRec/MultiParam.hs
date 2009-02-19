@@ -1,5 +1,4 @@
 {-# LANGUAGE TypeOperators 
-           , GADTs
            , KindSignatures
            , TypeFamilies
            , MultiParamTypeClasses
@@ -10,8 +9,7 @@
 module MultiParam where
 
 data K a       (es :: * -> *) r = K a
-data E a       (es :: * -> *) r where
-    E :: es a -> E a es r
+data E a       (es :: * -> *) r = E (es a)
 data I         (es :: * -> *) r = I r
 data (f :*: g) (es :: * -> *) r = f es r :*: g es r
 data (f :+: g) (es :: * -> *) r = L (f es r) | R (g es r)
@@ -28,7 +26,7 @@ class EIx es a where
     from :: a -> PF a es a
     to :: PF a es a -> a
 
-class GMap (f :: (* -> *) -> * -> *) where
+class GMap f where
     gmap' :: (forall n. es n -> es2 n) -> (a -> b) -> f es a -> f es2 b
 
 instance GMap (K a) where
@@ -38,7 +36,7 @@ instance GMap (E n) where
     gmap' f _ (E e) = E (f e)
 
 instance GMap I where
-    gmap' _ g (I r) = I (g r) -- I (to $ gmap' f $ from r)
+    gmap' _ g (I r) = I (g r)
 
 instance (GMap f, GMap g) => GMap (f :+: g) where
     gmap' f g (L x) = L (gmap' f g x)
