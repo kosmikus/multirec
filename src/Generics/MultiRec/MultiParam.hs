@@ -27,7 +27,7 @@ class EIx es a where
     to :: PF a es a -> a
 
 class GMap f where
-    gmap' :: (forall n. es n -> es2 n) -> (a -> b) -> f es a -> f es2 b
+    gmap' :: (forall n. es n -> es2 n) -> (r -> r') -> f es r -> f es2 r'
 
 instance GMap (K a) where
     gmap' _ _ (K a) = K a
