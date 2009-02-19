@@ -5,6 +5,7 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
+{-# LANGUAGE EmptyDataDecls        #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -29,7 +30,7 @@
 module Generics.MultiRec.Base 
   (-- * Structure types
    I(..), unI,
-   K(..), U(..), Comp(..), (:+:)(..), (:*:)(..),
+   K(..), U(..), E(..), Comp(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
    C(..), unC,
 
@@ -42,12 +43,18 @@ module Generics.MultiRec.Base
    -- * Indexed systems
    PF, Str, Ix(..),
 
+   -- * Type level numbers
+   Zero, Suc,
+
    -- * Equality type
    (:=:)(..), Eq_(..)
   ) where
 
 import Control.Applicative
 import Generics.MultiRec.Constructor
+
+data Zero
+data Suc a
 
 -- * Structure types
 
@@ -57,44 +64,47 @@ infixr 7 :*:
 
 -- | Represents recursive positions. The first argument indicates
 -- which type (within the system) to recurse on.
-data I :: * -> (* -> *) -> (* -> *) -> * -> * where
-  I :: Ix s xi => r xi -> I xi s r ix
+data I :: * -> ((* -> *) -> * -> *) -> (* -> *) -> (* -> *) -> * -> * where
+  I :: Ix s es xi => r xi -> I xi s es r ix
 
 -- | Destructor for 'I'.
-unI :: I xi s r ix -> r xi
+unI :: I xi s es r ix -> r xi
 unI (I x) = x
 
 -- | Represents constant types that do not belong to the system.
-data K a       (s :: * -> *) (r :: * -> *) ix = K {unK :: a}
+data K a       (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = K {unK :: a}
 
 -- | Represents constructors without fields.
-data U         (s :: * -> *) (r :: * -> *) ix = U
+data U         (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = U
+
+-- | Represents the n'th element type.
+data E n       (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = E (es n)
 
 -- | Composition of two functors. The outer functor is from BaseF, the
 -- inner from Base.
-data Comp f (s' :: (* -> *) -> *) (ix' :: * -> *) g (s :: * -> *) (r :: * -> *) ix = Comp (f s' I0F (g s r ix) ix')
+data Comp f (s' :: (* -> *) -> *) (ix' :: * -> *) g (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = Comp (f s' I0F (g s es r ix) ix')
 
 -- | Represents sums (choices between constructors).
-data (f :+: g) (s :: * -> *) (r :: * -> *) ix = L (f s r ix) | R (g s r ix)
+data (f :+: g) (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = L (f s es r ix) | R (g s es r ix)
 
 -- | Represents products (sequences of fields of a constructor).
-data (f :*: g) (s :: * -> *) (r :: * -> *) ix = f s r ix :*: g s r ix
+data (f :*: g) (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix = f s es r ix :*: g s es r ix
 
 -- | Is used to indicate the type (within the system) that a
 -- particular constructor injects to.
-data (:>:) :: ((* -> *) -> (* -> *) -> * -> *) -> * -> (* -> *) -> (* -> *) -> * -> * where
-  Tag :: f s r ix -> (f :>: ix) s r ix
+data (:>:) :: (((* -> *) -> * -> *) -> (* -> *) -> (* -> *) -> * -> *) -> * -> ((* -> *) -> * -> *) -> (* -> *) -> (* -> *) -> * -> * where
+  Tag :: f s es r ix -> (f :>: ix) s es r ix
 
 -- | Destructor for '(:>:)'.
-unTag :: (f :>: ix) s r ix -> f s r ix
+unTag :: (f :>: ix) s es r ix -> f s es r ix
 unTag (Tag x) = x
 
 -- | Represents constructors.
-data C c f     (s :: * -> *) (r :: * -> *) ix where
-  C :: (Constructor c) => f s r ix -> C c f s r ix
+data C c f     (s :: (* -> *) -> * -> *) (es :: * -> *) (r :: * -> *) ix where
+  C :: (Constructor c) => f s es r ix -> C c f s es r ix
 
 -- | Destructor for 'C'.
-unC :: C c f s r ix -> f s r ix
+unC :: C c f s es r ix -> f s es r ix
 unC (C x) = x
 
 -- ** Unlifted variants
@@ -121,23 +131,23 @@ instance Functor (K0 a) where
 -- * Indexed systems
 
 -- | Type family describing the pattern functor of a system.
-type family PF s :: (* -> *) -> (* -> *) -> * -> *
-type Str s ix = (PF s) s I0 ix
+type family PF (s :: * -> *) :: ((* -> *) -> * -> *) -> (* -> *) -> (* -> *) -> * -> *
+type Str s es ix = (PF (s es)) s es I0 ix
 
-class Ix s ix where
-  from_ :: ix -> Str s ix
-  to_   :: Str s ix -> ix
+class Ix s es ix where
+  from_ :: ix -> Str s es ix
+  to_   :: Str s es ix -> ix
 
   -- | Some functions need to have their types desugared in order to make programs
   -- that use them typable.  Desugaring consists in transforming ``inline'' type
   -- family applications into equality constraints. This is a strangeness in current
   -- versions of GHC that hopefully will be fixed sometime in the future.
-  from  :: (pfs ~ PF s) => ix -> pfs s I0 ix
+  from  :: (pfs ~ PF (s es)) => ix -> pfs s es I0 ix
   from = from_
-  to    :: (pfs ~ PF s) => pfs s I0 ix -> ix
+  to    :: (pfs ~ PF (s es)) => pfs s es I0 ix -> ix
   to = to_
 
-  index :: s ix
+  index :: s es ix
 
 infix 4 :=:
 

@@ -25,9 +25,9 @@ import qualified Generics.MultiRec.EqF as EqF
 -- * Generic equality
 
 class HEq f where
-  heq :: s ix ->
-         (forall ix. Ix s ix => s ix -> r ix -> r ix -> Bool) ->
-         f s r ix -> f s r ix -> Bool
+  heq :: s es ix ->
+         (forall ix. Ix s es ix => s es ix -> r ix -> r ix -> Bool) ->
+         f s es r ix -> f s es r ix -> Bool
 
 instance HEq (I xi) where
   heq _ eq (I x1) (I x2) = eq index x1 x2
@@ -58,14 +58,14 @@ instance HEq f => HEq (f :>: ix) where
 instance HEq f => HEq (C c f) where
   heq ix eq (C x1) (C x2) = heq ix eq x1 x2
 
-eq :: (Ix s ix, HEq (PF s)) => s ix -> ix -> ix -> Bool
+eq :: (Ix s es ix, HEq (PF (s es))) => s es ix -> ix -> ix -> Bool
 eq ix x1 x2 = heq ix (\ ix (I0 x1) (I0 x2) -> eq ix x1 x2) (from x1) (from x2)
 
 -- Note:
 -- 
 -- We do not declare an equality instance such as
 --
---   instance (Ix s ix, HEq (PF s)) => Eq ix where
+--   instance (Ix s ix, HEq (PF (s es))) => Eq ix where
 --     (==) = eq index
 --
 -- because "s" is not mentioned on the right hand side.

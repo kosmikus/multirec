@@ -2,6 +2,7 @@
 {-# LANGUAGE RankNTypes    #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE KindSignatures #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -23,17 +24,17 @@ import Control.Applicative ((<$>), Applicative(..), liftA, liftA2, WrappedMonad(
 
 import Generics.MultiRec.Base
 import qualified Generics.MultiRec.BaseF as F
-import Generics.MultiRec.GMap
+import Generics.MultiRec.GMapF
 
 -- * Generic map
 
 -- We define a general 'hmapA' that works on applicative functors.
 -- The simpler 'hmap' is a special case.
 
-class HFunctor f where
+class HFunctor (f :: ((* -> *) -> * -> *) -> (* -> *) -> (* -> *) -> * -> *) where
   hmapA :: (Applicative a) =>
-           (forall ix. Ix s ix => s ix -> r ix -> a (r' ix)) ->
-           f s r ix -> a (f s r' ix)
+           (forall ix. Ix s es ix => s es ix -> r ix -> a (r' ix)) ->
+           f s es r ix -> a (f s es r' ix)
 
 instance HFunctor (I xi) where
   hmapA f (I x) = liftA I (f index x)
@@ -67,12 +68,12 @@ instance HFunctor f => HFunctor (C c f) where
 -- with the correct system @s@, the argument to @hmap@ is additionally
 -- parameterized by a witness of type @s ix@. 
 hmap  :: (HFunctor f) =>
-         (forall ix. Ix s ix => s ix -> r ix -> r' ix) ->
-         f s r ix -> f s r' ix
+         (forall ix. Ix s es ix => s es ix -> r ix -> r' ix) ->
+         f s es r ix -> f s es r' ix
 hmap f x = unI0 (hmapA (\ ix x -> I0 (f ix x)) x)
 
 -- | Monadic version of 'hmap'.
 hmapM :: (HFunctor f, Monad m) =>
-         (forall ix. Ix s ix => s ix -> r ix -> m (r' ix)) ->
-         f s r ix -> m (f s r' ix)
+         (forall ix. Ix s es ix => s es ix -> r ix -> m (r' ix)) ->
+         f s es r ix -> m (f s es r' ix)
 hmapM f x = unwrapMonad (hmapA (\ ix x -> WrapMonad (f ix x)) x)
