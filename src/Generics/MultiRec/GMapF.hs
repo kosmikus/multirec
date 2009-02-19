@@ -4,7 +4,7 @@
            , RankNTypes
            , RelaxedPolyRec
            #-}
-module Generics.MultiRec.GMap where
+module Generics.MultiRec.GMapF where
 
 import Control.Applicative
 import Generics.MultiRec.BaseF

@@ -23,7 +23,7 @@ module Generics.MultiRec.HFunctorF where
 import Control.Applicative ((<$>), Applicative(..), WrappedMonad(..))
 
 import Generics.MultiRec.BaseF
-import Generics.MultiRec.GMap
+import Generics.MultiRec.GMapF
 
 -- * Generic map
 
