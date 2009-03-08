@@ -64,41 +64,37 @@ type instance PF AST  =
   :+: (               (K String)
       ) :>: Var
 
--- ** 'Ix' instances
+-- ** 'El' instances
 
-instance Ix AST Expr where
+instance El AST Expr where proof = Expr
+instance El AST Decl where proof = Decl
+instance El AST Var  where proof = Var
 
-  from_ (Const i)  =  L (Tag (L          (C (K i))))
-  from_ (Add e f)  =  L (Tag (R (L       (C (I (I0 e) :*: I (I0 f))))))
-  from_ (Mul e f)  =  L (Tag (R (R (L    (C (I (I0 e) :*: I (I0 f)))))))
-  from_ (EVar x)   =  L (Tag (R (R (R (L (C (I (I0 x))))))))
-  from_ (Let d e)  =  L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e))))))))
+-- ** 'Fam' instance
 
-  to_ (L (Tag (L          (C (K i)))))                       =  Const i
-  to_ (L (Tag (R (L       (C (I (I0 e) :*: I (I0 f)))))))    =  Add e f
-  to_ (L (Tag (R (R (L    (C (I (I0 e) :*: I (I0 f))))))))   =  Mul e f
-  to_ (L (Tag (R (R (R (L (C (I (I0 x)))))))))               =  EVar x
-  to_ (L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e)))))))))  =  Let d e
+instance Fam AST where
 
-  index  =  Expr
+  from Expr (Const i)  =  L (Tag (L          (C (K i))))
+  from Expr (Add e f)  =  L (Tag (R (L       (C (I (I0 e) :*: I (I0 f))))))
+  from Expr (Mul e f)  =  L (Tag (R (R (L    (C (I (I0 e) :*: I (I0 f)))))))
+  from Expr (EVar x)   =  L (Tag (R (R (R (L (C (I (I0 x))))))))
+  from Expr (Let d e)  =  L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e))))))))
 
-instance Ix AST Decl where
+  from Decl (x := e)   =  R (L (Tag (L    (C (I (I0 x) :*: I (I0 e))))))
+  from Decl (Seq c d)  =  R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d)))))))
+  from Decl (None)     =  R (L (Tag (R (R (C U)))))
 
-  from_ (x := e)   =  R (L (Tag (L    (C (I (I0 x) :*: I (I0 e))))))
-  from_ (Seq c d)  =  R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d)))))))
-  from_ (None)     =  R (L (Tag (R (R (C U)))))
+  from Var  x          =  R (R (Tag (K x)))
 
-  to_ (R (L (Tag (L    (C (I (I0 x) :*: I (I0 e)))))))   =  x := e
-  to_ (R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d))))))))  = Seq c d
-  to_ (R (L (Tag (R (R (C U))))))                        = None
+  to Expr (L (Tag (L          (C (K i)))))                       =  Const i
+  to Expr (L (Tag (R (L       (C (I (I0 e) :*: I (I0 f)))))))    =  Add e f
+  to Expr (L (Tag (R (R (L    (C (I (I0 e) :*: I (I0 f))))))))   =  Mul e f
+  to Expr (L (Tag (R (R (R (L (C (I (I0 x)))))))))               =  EVar x
+  to Expr (L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e)))))))))  =  Let d e
 
-  index  =  Decl
+  to Decl (R (L (Tag (L    (C (I (I0 x) :*: I (I0 e)))))))       =  x := e
+  to Decl (R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d))))))))      =  Seq c d
+  to Decl (R (L (Tag (R (R (C U))))))                            =  None
 
-instance Ix AST Var where
-
-  from_ x  =  R (R (Tag (K x)))
-
-  to_ (R (R (Tag (K x))))  =  x
-
-  index  =  Var
+  to Var  (R (R (Tag (K x))))                                    =  x
 

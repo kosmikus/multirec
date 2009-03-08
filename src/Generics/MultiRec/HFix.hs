@@ -22,13 +22,14 @@ module Generics.MultiRec.HFix where
 
 import Generics.MultiRec.Base
 import Generics.MultiRec.HFunctor
+import Generics.MultiRec.Fold
 
 -- * Fixed point of indexed types
 
 data HFix (h :: (* -> *) -> * -> *) ix = HIn { hout :: h (HFix h) ix }
 
-hfrom :: (pfs ~ PF s, Ix s ix, HFunctor (PF s)) => ix -> HFix (pfs s) ix
-hfrom = HIn . hmap (const (hfrom . unI0)) . from
+hfrom :: (Fam phi, HFunctor phi (PF phi)) => phi ix -> ix -> HFix (PF phi) ix
+hfrom = fold (const HIn)
 
-hto :: (pfs ~ PF s, Ix s ix, HFunctor (PF s)) => HFix (pfs s) ix -> ix
-hto = to . hmap (const (I0 . hto)) . hout
+hto :: (Fam phi, HFunctor phi (PF phi)) => phi ix -> HFix (PF phi) ix -> ix
+hto = unfold (const hout)

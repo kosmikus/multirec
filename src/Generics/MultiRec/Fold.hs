@@ -25,7 +25,8 @@
 --   * for folds with constant return type, look at 
 --     "Generics.MultiRec.FoldAlgK" (or "Generics.MultiRec.FoldK"),
 --
---   * for other folds, look at "Generics.MultiRec.FoldAlg".
+--   * for folds with convenient algebras, look at
+--     "Generics.MultiRec.FoldAlg".
 --
 -----------------------------------------------------------------------------
 
@@ -39,64 +40,59 @@ import Control.Applicative
 
 -- * Generic fold and unfold
 
-type Algebra'  s f   r = forall ix. Ix s ix => s ix -> f s r ix -> r ix
-type Algebra   s     r = Algebra' s (PF s) r
-type AlgebraF' s f g r = forall ix. Ix s ix => s ix -> f s r ix -> g (r ix)
-type AlgebraF  s   g r = AlgebraF' s (PF s) g r
+type Algebra'  phi f   r = forall ix. phi ix -> f r ix -> r ix
+type Algebra   phi     r = Algebra' phi (PF phi) r
+type AlgebraF' phi f g r = forall ix. phi ix -> f r ix -> g (r ix)
+type AlgebraF  phi   g r = AlgebraF' phi (PF phi) g r
 
-fold :: (Ix s ix, HFunctor (PF s)) =>
-        Algebra s r -> ix -> r ix
-fold f = f index . hmap (\ _ (I0 x) -> fold f x) . from
+fold :: (Fam phi, HFunctor phi (PF phi)) =>
+        Algebra phi r -> phi ix -> ix -> r ix
+fold f p = f p . hmap (\ p (I0 x) -> fold f p x) . from p
 
-foldM :: (Ix s ix, HFunctor (PF s), Monad m) =>
-         AlgebraF s m r -> ix -> m (r ix)
-foldM f x = hmapM (\ _ (I0 x) -> foldM f x) (from x) >>= f index
+foldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
+         AlgebraF phi m r -> phi ix -> ix -> m (r ix)
+foldM f p x = hmapM (\ p (I0 x) -> foldM f p x) (from p x) >>= f p
 
-type CoAlgebra'  s f   r = forall ix. Ix s ix => s ix -> r ix -> f s r ix
-type CoAlgebra   s     r = CoAlgebra' s (PF s) r
-type CoAlgebraF' s f g r = forall ix. Ix s ix => s ix -> r ix -> g (f s r ix)
-type CoAlgebraF  s   g r = CoAlgebraF' s (PF s) g r
+type CoAlgebra'  phi f   r = forall ix. phi ix -> r ix -> f r ix
+type CoAlgebra   phi     r = CoAlgebra' phi (PF phi) r
+type CoAlgebraF' phi f g r = forall ix. phi ix -> r ix -> g (f r ix)
+type CoAlgebraF  phi   g r = CoAlgebraF' phi (PF phi) g r
 
-unfold :: (Ix s ix, HFunctor (PF s)) =>
-          CoAlgebra s r -> r ix -> ix
-unfold f = to . hmap (\ _ x -> I0 (unfold f x)) . f index
+unfold :: (Fam phi, HFunctor phi (PF phi)) =>
+          CoAlgebra phi r -> phi ix -> r ix -> ix
+unfold f p = to p . hmap (\ p x -> I0 (unfold f p x)) . f p
 
-unfoldM :: (Ix s ix, HFunctor (PF s), Monad m) =>
-           CoAlgebraF s m r -> r ix -> m ix
-unfoldM f x = f index x >>= liftMto . hmapM (\ _ x -> liftM I0 (unfoldM f x))
-  where
-    -- only for ghc-6.8.3 compatibility
-    liftMto :: (Monad m, Ix s ix, pfs ~ PF s) => m (pfs s I0 ix) -> m ix
-    liftMto = liftM to
+unfoldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
+           CoAlgebraF phi m r -> phi ix -> r ix -> m ix
+unfoldM f p x = f p x >>= liftM (to p) . hmapM (\ p x -> liftM I0 (unfoldM f p x))
 
-type ParaAlgebra'  s f   r = forall ix. Ix s ix => s ix -> f s r ix -> ix -> r ix
-type ParaAlgebra   s     r = ParaAlgebra' s (PF s) r
-type ParaAlgebraF' s f g r = forall ix. Ix s ix => s ix -> f s r ix -> ix -> g (r ix)
-type ParaAlgebraF  s   g r = ParaAlgebraF' s (PF s) g r
+type ParaAlgebra'  phi f   r = forall ix. phi ix -> f r ix -> ix -> r ix
+type ParaAlgebra   phi     r = ParaAlgebra' phi (PF phi) r
+type ParaAlgebraF' phi f g r = forall ix. phi ix -> f r ix -> ix -> g (r ix)
+type ParaAlgebraF  phi   g r = ParaAlgebraF' phi (PF phi) g r
 
-para :: (Ix s ix, HFunctor (PF s)) => 
-        ParaAlgebra s r -> ix -> r ix
-para f x = f index (hmap (\ _ (I0 x) -> para f x) (from x)) x
+para :: (Fam phi, HFunctor phi (PF phi)) => 
+        ParaAlgebra phi r -> phi ix -> ix -> r ix
+para f p x = f p (hmap (\ p (I0 x) -> para f p x) (from p x)) x
 
-paraM :: (Ix s ix, HFunctor (PF s), Monad m) => 
-         ParaAlgebraF s m r -> ix -> m (r ix)
-paraM f x = hmapM (\ _ (I0 x) -> paraM f x) (from x) >>= \ r -> f index r x
+paraM :: (Fam phi, HFunctor phi (PF phi), Monad m) => 
+         ParaAlgebraF phi m r -> phi ix -> ix -> m (r ix)
+paraM f p x = hmapM (\ p (I0 x) -> paraM f p x) (from p x) >>= \ r -> f p r x
 
 -- * Creating an algebra
 
 infixr 5 &
 infixr :->
 
-type AlgPart a (s :: * -> *) r ix = a s r ix -> r ix
-type (f :-> g) (s :: * -> *) (r :: * -> *) ix = f s r ix -> g s r ix
+type AlgPart f r ix = f r ix -> r ix
+type (f :-> g) (r :: * -> *) ix = f r ix -> g r ix
 
-(&) :: (AlgPart a :-> AlgPart b :-> AlgPart (a :+: b)) s r ix
+(&) :: (AlgPart a :-> AlgPart b :-> AlgPart (a :+: b)) r ix
 (f & g) (L x) = f x
 (f & g) (R x) = g x 
 
-tag :: AlgPart a s r ix -> AlgPart (a :>: ix) s r ix'
+tag :: AlgPart a r ix -> AlgPart (a :>: ix) r ix'
 tag f (Tag x) = f x
 
-con :: AlgPart a s r ix -> AlgPart (C c a) s r ix
+con :: AlgPart a r ix -> AlgPart (C c a) r ix
 con f (C x) = f x
-

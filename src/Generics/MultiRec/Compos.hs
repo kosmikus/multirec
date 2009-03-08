@@ -30,16 +30,16 @@ import Generics.MultiRec.HFunctor
 -- * Compos
 
 -- | Normal version.
-compos :: (Ix s ix, HFunctor (PF s)) =>
-          (forall ix. Ix s ix => s ix -> ix -> ix) -> ix -> ix
-compos f = to . hmap (\ ix -> I0 . f ix . unI0) . from
+compos :: (Fam phi, HFunctor phi (PF phi)) =>
+          (forall ix. phi ix -> ix -> ix) -> phi ix -> ix -> ix
+compos f p = to p . hmap (\ p -> I0 . f p . unI0) . from p
 
 -- | Monadic version of 'compos'.
-composM :: (Ix s ix, HFunctor (PF s), Monad m) =>
-           (forall ix. Ix s ix => s ix -> ix -> m ix) -> ix -> m ix
-composM f = liftM to . hmapM (\ ix -> liftM I0 . f ix . unI0) . from
+composM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
+           (forall ix. phi ix -> ix -> m ix) -> phi ix -> ix -> m ix
+composM f p = liftM (to p) . hmapM (\ p -> liftM I0 . f p . unI0) . from p
 
 -- | Applicative version of 'compos'.
-composA :: (Ix s ix, HFunctor (PF s), Applicative a) =>
-           (forall ix. Ix s ix => s ix -> ix -> a ix) -> ix -> a ix
-composA f = liftA to . hmapA (\ ix -> liftA I0 . f ix . unI0) . from
+composA :: (Fam phi, HFunctor phi (PF phi), Applicative a) =>
+           (forall ix. phi ix -> ix -> a ix) -> phi ix -> ix -> a ix
+composA f p = liftA (to p) . hmapA (\ p -> liftA I0 . f p . unI0) . from p

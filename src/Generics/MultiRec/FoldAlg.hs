@@ -30,51 +30,50 @@ import Generics.MultiRec.HFunctor
 -- * The type family of convenient algebras.
 
 -- | The type family we use to describe the convenient algebras.
-type family Alg (f :: (* -> *) -> (* -> *) -> * -> *) 
-                (s :: * -> *)      -- system
+type family Alg (f :: (* -> *) -> * -> *) 
                 (r :: * -> *)      -- recursive positions
                 (ix :: *)          -- index
                 :: *
 
 -- | For a constant, we take the constant value to a result.
-type instance Alg (K a) (s :: * -> *) (r :: * -> *) ix = a -> r ix
+type instance Alg (K a) (r :: * -> *) ix = a -> r ix
 
 -- | For a unit, no arguments are available.
-type instance Alg U (s :: * -> *) (r :: * -> *) ix = r ix
+type instance Alg U (r :: * -> *) ix = r ix
 
 -- | For an identity, we turn the recursive result into a final result.
 --   Note that the index can change.
-type instance Alg (I xi) (s :: * -> *) r ix = r xi -> r ix
+type instance Alg (I xi) r ix = r xi -> r ix
 
 -- | For a sum, the algebra is a pair of two algebras.
-type instance Alg (f :+: g) s r ix = (Alg f s r ix, Alg g s r ix)
+type instance Alg (f :+: g) r ix = (Alg f r ix, Alg g r ix)
 
 -- | For a product where the left hand side is a constant, we
 --   take the value as an additional argument.
-type instance Alg (K a :*: g) s r ix = a -> Alg g s r ix
+type instance Alg (K a :*: g) r ix = a -> Alg g r ix
 
 -- | For a product where the left hand side is an identity, we
 --   take the recursive result as an additional argument.
-type instance Alg (I xi :*: g) s r ix = r xi -> Alg g s r ix
+type instance Alg (I xi :*: g) r ix = r xi -> Alg g r ix
 
 -- | A tag changes the index of the final result.
-type instance Alg (f :>: xi) s r ix = Alg f s r xi
+type instance Alg (f :>: xi) r ix = Alg f r xi
 
 -- | Constructors are ignored.
-type instance Alg (C c f) s r ix = Alg f s r ix
+type instance Alg (C c f) r ix = Alg f r ix
 
 -- | The algebras passed to the fold have to work for all index types
---   in the system. The additional witness argument is required only
+--   in the family. The additional witness argument is required only
 --   to make GHC's typechecker happy.
-type Algebra s r = forall ix. Ix s ix => s ix -> Alg (PF s) s r ix
+type Algebra phi r = forall ix. phi ix -> Alg (PF phi) r ix
 
 -- * The class to turn convenient algebras into standard algebras.
 
 -- | The class fold explains how to convert a convenient algebra
 --   'Alg' back into a function from functor to result, as required
 --   by the standard fold function.
-class Fold (f :: (* -> *) -> (* -> *) -> * -> *) where
-  alg :: (Ix s ix) => Alg f s r ix -> f s r ix -> r ix
+class Fold (f :: (* -> *) -> * -> *) where
+  alg :: Alg f r ix -> f r ix -> r ix
 
 instance Fold (K a) where
   alg f (K x) = f x
@@ -103,20 +102,12 @@ instance (Fold f) => Fold (C c f) where
 
 -- * Interface
 
--- | Variant of fold that takes an additional witness argument.
-fold_ :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
-         s ix ->
-         Algebra s r ->
-         ix -> r ix
-fold_ ix f = (alg :: Alg (PF s) s r ix -> (PF s) s r ix -> r ix) (f ix) .
-             hmap (\ _ (I0 x) -> fold_ index f x) .
-             from
-
 -- | Fold with convenient algebras.
-fold :: forall s ix r . (Ix s ix, HFunctor (PF s), Fold (PF s)) =>
-        Algebra s r ->
-        ix -> r ix
-fold = fold_ index
+fold :: forall phi ix r . (Fam phi, HFunctor phi (PF phi), Fold (PF phi)) =>
+        Algebra phi r -> phi ix -> ix -> r ix
+fold f p = alg (f p) .
+           hmap (\ p (I0 x) -> fold f p x) .
+           from p
 
 -- * Construction of algebras
 

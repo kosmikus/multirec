@@ -31,9 +31,9 @@ example = Let (Seq ("x" := Mul (Const 6) (Const 9)) None)
 renameVar :: Expr -> Expr
 renameVar = renameVar' Expr
   where
-    renameVar' :: Ix AST a => AST a -> a -> a
+    renameVar' :: AST a -> a -> a
     renameVar' Var x = x ++ "_"
-    renameVar' _   x = compos renameVar' x
+    renameVar' p   x = compos renameVar' p x
 
 -- | Test for 'renameVar'
 
@@ -90,12 +90,12 @@ evalAlgebra2 _ =
 -- | Evaluator
 
 eval1 :: Expr -> Env -> Int
-eval1 x = let (EV f) = F.fold evalAlgebra1 x in f
+eval1 x = let (EV f) = F.fold evalAlgebra1 Expr x in f
 
 -- | Evaluator
 
 eval2 :: Expr -> Env -> Int
-eval2 x = let (EV f) = FA.fold evalAlgebra2 x in f
+eval2 x = let (EV f) = FA.fold evalAlgebra2 Expr x in f
 
 -- | Test for 'eval1'
 

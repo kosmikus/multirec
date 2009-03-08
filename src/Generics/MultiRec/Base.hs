@@ -28,7 +28,7 @@
 
 module Generics.MultiRec.Base 
   (-- * Structure types
-   I(..), unI,
+   I(..),
    K(..), U(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
    C(..), unC,
@@ -40,7 +40,7 @@ module Generics.MultiRec.Base
    I0(..), K0(..),
 
    -- * Indexed systems
-   PF, Str, Ix(..),
+   PF, El(..), Fam(..), index,
 
    -- ** Equality for indexed systems
    module Generics.MultiRec.TEq,
@@ -59,40 +59,35 @@ infixr 7 :*:
 
 -- | Represents recursive positions. The first argument indicates
 -- which type (within the system) to recurse on.
-data I :: * -> (* -> *) -> (* -> *) -> * -> * where
-  I :: Ix s xi => r xi -> I xi s r ix
-
--- | Destructor for 'I'.
-unI :: I xi s r ix -> r xi
-unI (I x) = x
+data I xi      (r :: * -> *) ix = I {unI :: r xi}
 
 -- | Represents constant types that do not belong to the system.
-data K a       (s :: * -> *) (r :: * -> *) ix = K {unK :: a}
+data K a       (r :: * -> *) ix = K {unK :: a}
 
 -- | Represents constructors without fields.
-data U         (s :: * -> *) (r :: * -> *) ix = U
+data U         (r :: * -> *) ix = U
 
 -- | Represents sums (choices between constructors).
-data (f :+: g) (s :: * -> *) (r :: * -> *) ix = L (f s r ix) | R (g s r ix)
+data (f :+: g) (r :: * -> *) ix = L (f r ix) | R (g r ix)
 
 -- | Represents products (sequences of fields of a constructor).
-data (f :*: g) (s :: * -> *) (r :: * -> *) ix = f s r ix :*: g s r ix
+data (f :*: g) (r :: * -> *) ix = f r ix :*: g r ix
 
 -- | Is used to indicate the type (within the system) that a
 -- particular constructor injects to.
-data (:>:) :: ((* -> *) -> (* -> *) -> * -> *) -> * -> (* -> *) -> (* -> *) -> * -> * where
-  Tag :: f s r ix -> (f :>: ix) s r ix
+data f :>: ix :: (* -> *) -> * -> * where
+  Tag :: f r ix -> (f :>: ix) r ix
 
 -- | Destructor for '(:>:)'.
-unTag :: (f :>: ix) s r ix -> f s r ix
+unTag :: (f :>: ix) r ix -> f r ix
 unTag (Tag x) = x
 
 -- | Represents constructors.
-data C c f     (s :: * -> *) (r :: * -> *) ix where
-  C :: (Constructor c) => f s r ix -> C c f s r ix
+data C c f     (r :: * -> *) ix where
+  C :: f r ix -> C c f r ix
 
 -- | Destructor for 'C'.
-unC :: C c f s r ix -> f s r ix
+unC :: C c f r ix -> f r ix
 unC (C x) = x
 
 -- ** Unlifted variants
@@ -115,27 +110,23 @@ instance Functor (K0 a) where
 
 -- * Indexed systems
 
--- | Type family describing the pattern functor of a system.
-type family PF s :: (* -> *) -> (* -> *) -> * -> *
-type Str s ix = (PF s) s I0 ix
+-- | Type family describing the pattern functor of a family.
+type family PF phi :: (* -> *) -> * -> *
 
--- | Class that relates the types of a system.
-class Ix s ix where
-  from_ :: ix -> Str s ix
-  to_   :: Str s ix -> ix
+-- | Class for the members of a family.
+class El phi ix where
+  proof :: phi ix
 
-  -- | Some functions need to have their types desugared in order to make programs
-  -- that use them typable.  Desugaring consists in transforming ``inline'' type
-  -- family applications into equality constraints. This is a strangeness in current
-  -- versions of GHC that hopefully will be fixed sometime in the future.
-  from  :: (pfs ~ PF s) => ix -> pfs s I0 ix
-  from = from_
-  to    :: (pfs ~ PF s) => pfs s I0 ix -> ix
-  to = to_
+-- | For backwards-compatibility: a synonym for 'proof'.
+index :: El phi ix => phi ix
+index = proof
 
-  index :: s ix
+-- | Class that contains the shallow conversion functions for a family.
+class Fam phi where
+  from :: phi ix -> ix -> PF phi I0 ix
+  to   :: phi ix -> PF phi I0 ix -> ix
 
--- | Semi-decidable equality for types of a system.
-class EqS s where
-  eqS :: s ix -> s ix' -> Maybe (ix :=: ix')
+-- | Semi-decidable equality for types of a family.
+class EqS phi where
+  eqS :: phi ix -> phi ix' -> Maybe (ix :=: ix')
 

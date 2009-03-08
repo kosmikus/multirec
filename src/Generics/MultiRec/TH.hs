@@ -22,9 +22,10 @@
 
 module Generics.MultiRec.TH
   ( deriveConstructors,
-    deriveSystem,
+    deriveFamily, deriveSystem,
     derivePF,
-    deriveIx,
+    deriveEl,
+    deriveFam,
     deriveEqS
   ) where
 
@@ -48,15 +49,21 @@ deriveConstructors =
 -- of the GADT have the same names as the datatypes in the
 -- family.
 
-deriveSystem :: Name -> [Name] -> String -> Q [Dec]
-deriveSystem n ns pfn =
+deriveFamily :: Name -> [Name] -> String -> Q [Dec]
+deriveFamily n ns pfn =
   do
-    pf <- derivePF pfn ns
-    ix <- deriveIx n ns
-    eq <- deriveEqS n (map (mkName . nameBase) ns)
-    return $ pf ++ ix ++ eq
+    pf  <- derivePF pfn ns
+    el  <- deriveEl n ns
+    fam <- deriveFam n ns
+    eq  <- deriveEqS n (map (mkName . nameBase) ns)
+    return $ pf ++ el ++ fam ++ eq
 
--- | Derive only the 'PF' instance. Not needed if 'deriveSystem'
+-- | Compatibility. Use deriveFamily instead.
+
+deriveSystem :: Name -> [Name] -> String -> Q [Dec]
+deriveSystem = deriveFamily
+
+-- | Derive only the 'PF' instance. Not needed if 'deriveFamily'
 -- is used.
 
 derivePF :: String -> [Name] -> Q [Dec]
@@ -67,14 +74,26 @@ derivePF pfn ns =
     sum :: Q Type -> Q Type -> Q Type
     sum a b = conT ''(:+:) `appT` a `appT` b
 
--- | Derive only the 'Ix' instances. Not needed if 'deriveSystem'
+-- | Derive only the 'El' instances. Not needed if 'deriveFamily'
 -- is used.
 
-deriveIx :: Name -> [Name] -> Q [Dec]
-deriveIx s ns =
-  zipWithM (ixInstance s ns (length ns)) [0..] ns
+deriveEl :: Name -> [Name] -> Q [Dec]
+deriveEl s ns =
+  mapM (elInstance s) ns
 
--- | Derive only the 'EqS' instances. Not needed if 'deriveSystem'
+-- | Dervie only the 'Fam' instance. Not needed if 'deriveFamily'
+-- is used.
+
+deriveFam :: Name -> [Name] -> Q [Dec]
+deriveFam s ns =
+  do
+    fcs <- liftM concat $ zipWithM (mkFrom ns (length ns)) [0..] ns  
+    tcs <- liftM concat $ zipWithM (mkTo   ns (length ns)) [0..] ns
+    liftM (:[]) $
+      instanceD (cxt []) (conT ''Fam `appT` conT s)
+        [funD 'from fcs, funD 'to tcs]
+
+-- | Derive only the 'EqS' instance. Not needed if 'deriveFamily'
 -- is used.
 
 deriveEqS :: Name -> [Name] -> Q [Dec]
@@ -163,72 +182,74 @@ pfField :: [Name] -> Type -> Q Type
 pfField ns t@(ConT n) | n `elem` ns = conT ''I `appT` return t
 pfField ns t                        = conT ''K `appT` return t
 
-ixInstance :: Name -> [Name] -> Int -> Int -> Name -> Q Dec
-ixInstance s ns m i n =
-  instanceD (cxt []) (conT ''Ix `appT` conT s `appT` conT n)
-    [mkFrom ns n m i, mkTo ns n m i, mkIndex n]
+elInstance :: Name -> Name -> Q Dec
+elInstance s n =
+  instanceD (cxt []) (conT ''El `appT` conT s `appT` conT n)
+    [mkProof n]
 
-mkFrom :: [Name] -> Name -> Int -> Int -> Q Dec
-mkFrom ns n m i =
+mkFrom :: [Name] -> Int -> Int -> Name -> Q [Q Clause]
+mkFrom ns m i n =
     do
       -- runIO $ putStrLn $ "processing " ++ show n
       let wrapE e = lrE m i (conE 'Tag `appE` e)
       i <- reify n
+      let dn = mkName (nameBase n)
       let b = case i of
                 TyConI (DataD _ _ _ cs _) ->
-                  zipWith (fromCon wrapE ns (length cs)) [0..] cs
+                  zipWith (fromCon wrapE ns dn (length cs)) [0..] cs
                 TyConI (TySynD t _ _) ->
-                  [clause [varP (field 0)] (normalB (wrapE $ conE 'K `appE` varE (field 0))) []]
-                _ -> error "unknown construct" 
-      funD 'from_ b 
+                  [clause [conP dn [], varP (field 0)] (normalB (wrapE $ conE 'K `appE` varE (field 0))) []]
+                _ -> error "unknown construct"
+      return b
 
-mkTo :: [Name] -> Name -> Int -> Int -> Q Dec
-mkTo ns n m i =
+mkTo :: [Name] -> Int -> Int -> Name -> Q [Q Clause]
+mkTo ns m i n =
     do
       -- runIO $ putStrLn $ "processing " ++ show n
       let wrapP p = lrP m i (conP 'Tag [p])
       i <- reify n
+      let dn = mkName (nameBase n)
       let b = case i of
                 TyConI (DataD _ _ _ cs _) ->
-                  zipWith (toCon wrapP ns (length cs)) [0..] cs
+                  zipWith (toCon wrapP ns dn (length cs)) [0..] cs
                 TyConI (TySynD t _ _) ->
-                  [clause [wrapP $ conP 'K [varP (field 0)]] (normalB $ varE (field 0)) []]
+                  [clause [conP dn [], wrapP $ conP 'K [varP (field 0)]] (normalB $ varE (field 0)) []]
                 _ -> error "unknown construct" 
-      funD 'to_ b 
+      return b
 
-mkIndex :: Name -> Q Dec
-mkIndex n =
-  funD 'index [clause [] (normalB (conE (mkName (nameBase n)))) []]
+mkProof :: Name -> Q Dec
+mkProof n =
+  funD 'proof [clause [] (normalB (conE (mkName (nameBase n)))) []]
 
-fromCon :: (Q Exp -> Q Exp) -> [Name] -> Int -> Int -> Con -> Q Clause
-fromCon wrap ns m i (NormalC n []) =
+fromCon :: (Q Exp -> Q Exp) -> [Name] -> Name -> Int -> Int -> Con -> Q Clause
+fromCon wrap ns n m i (NormalC cn []) =
     clause
-      [conP n []]
+      [conP n [], conP cn []]
       (normalB $ wrap $ lrE m i $ conE 'C `appE` (conE 'U)) []
-fromCon wrap ns m i (NormalC n fs) =
+fromCon wrap ns n m i (NormalC cn fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
-      [conP n (map (varP . field) [0..length fs - 1])]
+      [conP n [], conP cn (map (varP . field) [0..length fs - 1])]
       (normalB $ wrap $ lrE m i $ conE 'C `appE` foldr1 prod (zipWith (fromField ns) [0..] (map snd fs))) []
   where
     prod x y = conE '(:*:) `appE` x `appE` y
-fromCon wrap ns m i (InfixC t1 n t2) =
-  fromCon wrap ns m i (NormalC n [t1,t2])
+fromCon wrap ns n m i (InfixC t1 cn t2) =
+  fromCon wrap ns n m i (NormalC cn [t1,t2])
 
-toCon :: (Q Pat -> Q Pat) -> [Name] -> Int -> Int -> Con -> Q Clause
-toCon wrap ns m i (NormalC n []) =
+toCon :: (Q Pat -> Q Pat) -> [Name] -> Name -> Int -> Int -> Con -> Q Clause
+toCon wrap ns n m i (NormalC cn []) =
     clause
-      [wrap $ lrP m i $ conP 'C [conP 'U []]]
-      (normalB $ conE n) []
-toCon wrap ns m i (NormalC n fs) =
+      [conP n [], wrap $ lrP m i $ conP 'C [conP 'U []]]
+      (normalB $ conE cn) []
+toCon wrap ns n m i (NormalC cn fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
-      [wrap $ lrP m i $ conP 'C [foldr1 prod (zipWith (toField ns) [0..] (map snd fs))]]
-      (normalB $ foldl appE (conE n) (map (varE . field) [0..length fs - 1])) []
+      [conP n [], wrap $ lrP m i $ conP 'C [foldr1 prod (zipWith (toField ns) [0..] (map snd fs))]]
+      (normalB $ foldl appE (conE cn) (map (varE . field) [0..length fs - 1])) []
   where
     prod x y = conP '(:*:) [x,y]
-toCon wrap ns m i (InfixC t1 n t2) =
-  toCon wrap ns m i (NormalC n [t1,t2])
+toCon wrap ns n m i (InfixC t1 cn t2) =
+  toCon wrap ns n m i (NormalC cn [t1,t2])
 
 fromField :: [Name] -> Int -> Type -> Q Exp
 fromField ns nr t@(ConT n) | n `elem` ns = conE 'I `appE` (conE 'I0 `appE` varE (field nr))

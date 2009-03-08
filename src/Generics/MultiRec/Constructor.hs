@@ -24,8 +24,8 @@ module Generics.MultiRec.Constructor
 -- The weird argument is supposed to be instantiated with 'C' from
 -- base, hence the complex kind.
 class Constructor c where
-  conName   :: t c (f :: (* -> *) -> (* -> *) -> * -> *) (s :: * -> *) (r :: * -> *) ix -> String
-  conFixity :: t c (f :: (* -> *) -> (* -> *) -> * -> *) (s :: * -> *) (r :: * -> *) ix -> Fixity
+  conName   :: t c (f :: (* -> *) -> * -> *) (r :: * -> *) ix -> String
+  conFixity :: t c (f :: (* -> *) -> * -> *) (r :: * -> *) ix -> Fixity
   conFixity = const Prefix
 
 -- | Datatype to represent the fixity of a constructor. An infix declaration
