@@ -60,7 +60,7 @@ instance (Constructor c, HFunctor phi f) => HFunctor phi (C c f) where
 -- in that functor are wrapped by an application of @r@. The argument to
 -- 'hmap' takes a function that transformes @r@ occurrences into @r'@
 -- occurrences, for every @ix@. In order to associate the index @ix@
--- with the correct system @phi@, the argument to @hmap@ is additionally
+-- with the correct family @phi@, the argument to @hmap@ is additionally
 -- parameterized by a witness of type @phi ix@. 
 hmap  :: (HFunctor phi f) =>
          (forall ix. phi ix -> r ix -> r' ix) ->

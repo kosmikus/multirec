@@ -15,7 +15,7 @@
 -- This module contains Template Haskell code that can be used to
 -- automatically generate the boilerplate code for the multiplate
 -- library. The constructor information can be generated per datatype,
--- the rest per system of datatypes.
+-- the rest per family of datatypes.
 --
 -----------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ deriveConstructors =
   liftM concat . mapM constrInstance
 
 -- | Given the name of the index GADT, the names of the
--- types in the system, and the name (as string) for the
+-- types in the family, and the name (as string) for the
 -- pattern functor to derive, generate the 'Ix' and 'PF'
 -- instances. /IMPORTANT/: It is assumed that the constructors
 -- of the GADT have the same names as the datatypes in the

@@ -17,9 +17,9 @@
 -- Portability :  non-portable
 --
 -- This module is the base of the multirec library. It defines the view of a
--- system of datatypes: All the datatypes of the system are represented as
+-- family of datatypes: All the datatypes of the family are represented as
 -- indexed functors that are built up from the structure types defined in this
--- module. Furthermore, in order to use the library for a system, conversion
+-- module. Furthermore, in order to use the library for a family, conversion
 -- functions have to be defined between the original datatypes and their
 -- representation. The type class that holds these conversion functions are
 -- also defined here.
@@ -39,10 +39,10 @@ module Generics.MultiRec.Base
    -- ** Unlifted variants
    I0(..), K0(..),
 
-   -- * Indexed systems
+   -- * Indexed families
    PF, El(..), Fam(..), index,
 
-   -- ** Equality for indexed systems
+   -- ** Equality for indexed families
    module Generics.MultiRec.TEq,
    EqS(..)
   ) where
@@ -58,10 +58,10 @@ infix  6 :>:
 infixr 7 :*:
 
 -- | Represents recursive positions. The first argument indicates
--- which type (within the system) to recurse on.
+-- which type to recurse on.
 data I xi      (r :: * -> *) ix = I {unI :: r xi}
 
--- | Represents constant types that do not belong to the system.
+-- | Represents constant types that do not belong to the family.
 data K a       (r :: * -> *) ix = K {unK :: a}
 
 -- | Represents constructors without fields.
@@ -73,7 +73,7 @@ data (f :+: g) (r :: * -> *) ix = L (f r ix) | R (g r ix)
 -- | Represents products (sequences of fields of a constructor).
 data (f :*: g) (r :: * -> *) ix = f r ix :*: g r ix
 
--- | Is used to indicate the type (within the system) that a
+-- | Is used to indicate the type that a
 -- particular constructor injects to.
 data f :>: ix :: (* -> *) -> * -> * where
   Tag :: f r ix -> (f :>: ix) r ix
@@ -108,7 +108,7 @@ instance Applicative I0 where
 instance Functor (K0 a) where
   fmap f = K0 . unK0
 
--- * Indexed systems
+-- * Indexed families
 
 -- | Type family describing the pattern functor of a family.
 type family PF phi :: (* -> *) -> * -> *

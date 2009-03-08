@@ -15,7 +15,7 @@
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
--- Generic function that returns the constructor names available in a system
+-- Generic function that returns the constructor names available in a family
 -- of datatypes.
 --
 -----------------------------------------------------------------------------

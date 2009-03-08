@@ -65,7 +65,7 @@ eq p x1 x2 = heq (\ p (I0 x1) (I0 x2) -> eq p x1 x2) p (from p x1) (from p x2)
 --     (==) = eq proof
 --
 -- because "phi" is not mentioned on the right hand side.
--- One datatype may belong to multiple systems, and
+-- One datatype may belong to multiple families, and
 -- although the generic equality instances should be
 -- the same, there is no good way to decide which instance
 -- to use.
