@@ -62,26 +62,28 @@ type instance PF LogicF  =
        :+:  C F     U
       ) :>: Logic
 
--- ** 'Ix' instances
+-- ** 'El' instance
 
-instance Ix LogicF Logic where
+instance El LogicF Logic where proof = Logic
 
-  from_ (Var s)       = Tag (L                   (C (K s)))
-  from_ (l1 :->: l2)  = Tag (R (L                (C (I (I0 l1) :*: I (I0 l2)))))
-  from_ (l1 :<->: l2) = Tag (R (R (L             (C (I (I0 l1) :*: I (I0 l2))))))
-  from_ (l1 :&&: l2)  = Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2)))))))
-  from_ (l1 :||: l2)  = Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))
-  from_ (Not l)       = Tag (R (R (R (R (R (L    (C (I (I0 l)))))))))
-  from_ T             = Tag (R (R (R (R (R (R (L (C U))))))))
-  from_ F             = Tag (R (R (R (R (R (R (R (C U))))))))
+-- ** 'Fam' instance
 
-  to_ (Tag (L                   (C (K s))))                         = Var s
-  to_ (Tag (R (L                (C (I (I0 l1) :*: I (I0 l2))))))    = l1 :->: l2
-  to_ (Tag (R (R (L             (C (I (I0 l1) :*: I (I0 l2)))))))   = l1 :<->: l2
-  to_ (Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2))))))))  = l1 :&&: l2
-  to_ (Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))) = l1 :||: l2
-  to_ (Tag (R (R (R (R (R (L    (C (I (I0 l))))))))))               = Not l
-  to_ (Tag (R (R (R (R (R (R (L (C U)))))))))                       = T
-  to_ (Tag (R (R (R (R (R (R (R (C U)))))))))                       = F
+instance Fam LogicF where
 
-  index  =  Logic
+  from Logic (Var s)       = Tag (L                   (C (K s)))
+  from Logic (l1 :->: l2)  = Tag (R (L                (C (I (I0 l1) :*: I (I0 l2)))))
+  from Logic (l1 :<->: l2) = Tag (R (R (L             (C (I (I0 l1) :*: I (I0 l2))))))
+  from Logic (l1 :&&: l2)  = Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2)))))))
+  from Logic (l1 :||: l2)  = Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))
+  from Logic (Not l)       = Tag (R (R (R (R (R (L    (C (I (I0 l)))))))))
+  from Logic T             = Tag (R (R (R (R (R (R (L (C U))))))))
+  from Logic F             = Tag (R (R (R (R (R (R (R (C U))))))))
+
+  to Logic (Tag (L                   (C (K s))))                         = Var s
+  to Logic (Tag (R (L                (C (I (I0 l1) :*: I (I0 l2))))))    = l1 :->: l2
+  to Logic (Tag (R (R (L             (C (I (I0 l1) :*: I (I0 l2)))))))   = l1 :<->: l2
+  to Logic (Tag (R (R (R (L          (C (I (I0 l1) :*: I (I0 l2))))))))  = l1 :&&: l2
+  to Logic (Tag (R (R (R (R (L       (C (I (I0 l1) :*: I (I0 l2))))))))) = l1 :||: l2
+  to Logic (Tag (R (R (R (R (R (L    (C (I (I0 l))))))))))               = Not l
+  to Logic (Tag (R (R (R (R (R (R (L (C U)))))))))                       = T
+  to Logic (Tag (R (R (R (R (R (R (R (C U)))))))))                       = F
