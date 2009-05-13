@@ -38,7 +38,7 @@ description:
 stability:		experimental
 build-type:		Simple
 cabal-version:		>= 1.2.1
-tested-with:		GHC == 6.8.3, GHC == 6.10.1
+tested-with:		GHC == 6.8.3, GHC == 6.10.3
 hs-source-dirs:		src
 exposed-modules:	Generics.MultiRec
 
@@ -71,5 +71,5 @@ extra-source-files:	examples/AST.hs
 			examples/SingleTHUse.hs
 			examples/SingleExamples.hs
 			CREDITS
-build-depends:		base >= 3.0 && < 4,
+build-depends:		base >= 3.0 && < 5,
                         template-haskell >= 2.2 && < 2.4

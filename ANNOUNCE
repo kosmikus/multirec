@@ -1,4 +1,4 @@
-multirec-0.2: Generic programming with systems of recursive datatypes
+multirec-0.3: Generic programming with systems of recursive datatypes
 =====================================================================
 
 Many generic programs require information about the recursive positions
@@ -14,16 +14,10 @@ points of systems of datatypes that may be mutually recursive. On top
 of this representations, generic functions such as the fold or the Zipper
 can then be defined.
 
-Changelog (changes w.r.t. multirec-0.1)
+Changelog (changes w.r.t. multirec-0.2)
 ---------------------------------------
 
-* Constructor information and generic show (Generics.MultiRec.Show).
-
-* Variants of fold (Generics.MultiRec.FoldAlg) that make the definition of
-  algebras significantly more convenient.
-
-* Template Haskell code to generate the boilerplate required to
-  instantiate this library to a system of datatypes.
+* Cleaned up the interface.
 
 Requirements
 ------------
