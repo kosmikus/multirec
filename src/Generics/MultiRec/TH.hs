@@ -117,16 +117,9 @@ constrInstance n =
     is <- mapM mkInstance cs
     return $ ds ++ is
 
-stripRecordNames :: Con -> Con
-stripRecordNames (RecC n f) =
-  NormalC n (map (\(_, s, t) -> (s, t)) f)
-stripRecordNames c = c
-
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
   dataD (cxt []) (mkName (nameBase n)) [] [] [] 
-mkData r@(RecC _ _) =
-  mkData (stripRecordNames r)
 mkData (InfixC t1 n t2) =
   mkData (NormalC n [t1,t2])
 
@@ -143,8 +136,6 @@ mkInstance :: Con -> Q Dec
 mkInstance (NormalC n _) =
     instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
       [funD 'conName [clause [wildP] (normalB (stringE (nameBase n))) []]]
-mkInstance r@(RecC _ _) =
-  mkInstance (stripRecordNames r)
 mkInstance (InfixC t1 n t2) =
     do
       i <- reify n
@@ -184,8 +175,6 @@ pfCon ns (NormalC n fs) =
   where
     prod :: Q Type -> Q Type -> Q Type
     prod a b = conT ''(:*:) `appT` a `appT` b
-pfCon ns r@(RecC _ _) =
-  pfCon ns (stripRecordNames r)
 pfCon ns (InfixC t1 n t2) =
     pfCon ns (NormalC n [t1,t2])
 
@@ -244,8 +233,6 @@ fromCon wrap ns n m i (NormalC cn fs) =
       (normalB $ wrap $ lrE m i $ conE 'C `appE` foldr1 prod (zipWith (fromField ns) [0..] (map snd fs))) []
   where
     prod x y = conE '(:*:) `appE` x `appE` y
-fromCon wrap ns n m i r@(RecC _ _) =
-  fromCon wrap ns n m i (stripRecordNames r)
 fromCon wrap ns n m i (InfixC t1 cn t2) =
   fromCon wrap ns n m i (NormalC cn [t1,t2])
 
@@ -261,8 +248,6 @@ toCon wrap ns n m i (NormalC cn fs) =
       (normalB $ foldl appE (conE cn) (map (varE . field) [0..length fs - 1])) []
   where
     prod x y = conP '(:*:) [x,y]
-toCon wrap ns n m i r@(RecC _ _) =
-  toCon wrap ns n m i (stripRecordNames r)
 toCon wrap ns n m i (InfixC t1 cn t2) =
   toCon wrap ns n m i (NormalC cn [t1,t2])
 
