@@ -11,7 +11,7 @@
 -- multirec --
 -- generic programming for families of recursive datatypes
 -- 
--- This top-level module re-exports most modules of the library.
+-- This top-level module re-exports all other modules of the library.
 --
 -----------------------------------------------------------------------------
 
@@ -24,9 +24,7 @@ module Generics.MultiRec
     module Generics.MultiRec.HFunctor,
     module Generics.MultiRec.Fold,
     module Generics.MultiRec.Compos,
-    module Generics.MultiRec.Eq,
-    module Generics.MultiRec.HFix,
-    module Generics.MultiRec.Show
+    module Generics.MultiRec.Eq
   )
   where
 
@@ -35,7 +33,5 @@ import Generics.MultiRec.HFunctor
 import Generics.MultiRec.Fold
 import Generics.MultiRec.Compos
 import Generics.MultiRec.Eq
-import Generics.MultiRec.HFix
-import Generics.MultiRec.Show
 
 
