@@ -100,10 +100,12 @@ deriveEqS :: Name -> [Name] -> Q [Dec]
 deriveEqS s ns =
     liftM (:[]) $
     instanceD (cxt []) (conT ''EqS `appT` conT s)
-      [funD 'eqS (map trueClause ns ++ [falseClause])]
+      [funD 'eqS (trues ++ falses)]
   where
     trueClause n = clause [conP n [], conP n []] (normalB (conE 'Just `appE` conE 'Refl)) []
     falseClause  = clause [wildP,  wildP]        (normalB (conE 'Nothing)) []
+    trues        = map trueClause ns
+    falses       = if length trues == 1 then [] else [falseClause]
 
 constrInstance :: Name -> Q [Dec]
 constrInstance n =
