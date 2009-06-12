@@ -1,4 +1,4 @@
-multirec-0.3: Generic programming with systems of recursive datatypes
+multirec-0.4: Generic programming with systems of recursive datatypes
 =====================================================================
 
 Many generic programs require information about the recursive positions
@@ -18,6 +18,7 @@ Changelog (changes w.r.t. multirec-0.2)
 ---------------------------------------
 
 * Cleaned up the interface.
+* Improved TH generation slightly.
 
 Requirements
 ------------

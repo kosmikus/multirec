@@ -105,7 +105,7 @@ instance (Fold f) => Fold (C c f) where
 fold :: forall phi ix r . (Fam phi, HFunctor phi (PF phi), Fold (PF phi)) =>
         Algebra phi r -> phi ix -> ix -> r
 fold f p = alg (f p) .
-           hmap (\ p (I0 x) -> K0 (fold f p x)) .
+           hmap (\ p (I0 x) -> K0 (fold f p x)) p .
            from p
 
 -- * Construction of algebras

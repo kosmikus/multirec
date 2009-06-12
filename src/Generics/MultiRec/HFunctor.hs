@@ -32,29 +32,29 @@ import Generics.MultiRec.Base
 class HFunctor phi f where
   hmapA :: (Applicative a) =>
            (forall ix. phi ix -> r ix -> a (r' ix)) ->
-           f r ix -> a (f r' ix)
+           phi ix -> f r ix -> a (f r' ix)
 
 instance El phi xi => HFunctor phi (I xi) where
-  hmapA f (I x) = I <$> f proof x
+  hmapA f _ (I x) = I <$> f proof x
 
 instance HFunctor phi (K x) where
-  hmapA _ (K x) = pure (K x)
+  hmapA _ _ (K x) = pure (K x)
 
 instance HFunctor phi U where
-  hmapA _ U = pure U
+  hmapA _ _ U = pure U
 
 instance (HFunctor phi f, HFunctor phi g) => HFunctor phi (f :+: g) where
-  hmapA f (L x) = L <$> hmapA f x
-  hmapA f (R y) = R <$> hmapA f y
+  hmapA f p (L x) = L <$> hmapA f p x
+  hmapA f p (R y) = R <$> hmapA f p y
 
 instance (HFunctor phi f, HFunctor phi g) => HFunctor phi (f :*: g) where
-  hmapA f (x :*: y) = (:*:) <$> hmapA f x <*> hmapA f y
+  hmapA f p (x :*: y) = (:*:) <$> hmapA f p x <*> hmapA f p y
 
 instance HFunctor phi f => HFunctor phi (f :>: ix) where
-  hmapA f (Tag x) = Tag <$> hmapA f x
+  hmapA f p (Tag x) = Tag <$> hmapA f p x
 
 instance (Constructor c, HFunctor phi f) => HFunctor phi (C c f) where
-  hmapA f (C x) = C <$> hmapA f x
+  hmapA f p (C x) = C <$> hmapA f p x
 
 -- | The function 'hmap' takes a functor @f@. All the recursive instances
 -- in that functor are wrapped by an application of @r@. The argument to
@@ -64,11 +64,11 @@ instance (Constructor c, HFunctor phi f) => HFunctor phi (C c f) where
 -- parameterized by a witness of type @phi ix@. 
 hmap  :: (HFunctor phi f) =>
          (forall ix. phi ix -> r ix -> r' ix) ->
-         f r ix -> f r' ix
-hmap f x = unI0 (hmapA (\ ix x -> I0 (f ix x)) x)
+         phi ix -> f r ix -> f r' ix
+hmap f p x = unI0 (hmapA (\ ix x -> I0 (f ix x)) p x)
 
 -- | Monadic version of 'hmap'.
 hmapM :: (HFunctor phi f, Monad m) =>
          (forall ix. phi ix -> r ix -> m (r' ix)) ->
-         f r ix -> m (f r' ix)
-hmapM f x = unwrapMonad (hmapA (\ ix x -> WrapMonad (f ix x)) x)
+         phi ix -> f r ix -> m (f r' ix)
+hmapM f p x = unwrapMonad (hmapA (\ ix x -> WrapMonad (f ix x)) p x)

@@ -1,5 +1,5 @@
 name:			multirec
-version:		0.3.1
+version:		0.4
 license:		BSD3
 license-file:		LICENSE
 author:			Alexey Rodriguez,
@@ -32,8 +32,7 @@ description:
   .
   *  Alexey Rodriguez, Stefan Holdermans, Andres Löh, Johan Jeuring.
      /Generic programming with fixed points for mutually recursive datatypes/.
-     Technical Report, Universiteit Utrecht
-     (<http://www.cs.uu.nl/research/techreps/repo/CS-2008/2008-019.pdf>).
+     ICFP 2009.
  
 stability:		experimental
 build-type:		Simple

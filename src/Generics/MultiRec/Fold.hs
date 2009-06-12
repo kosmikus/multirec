@@ -47,11 +47,11 @@ type AlgebraF  phi   g r = AlgebraF' phi (PF phi) g r
 
 fold :: (Fam phi, HFunctor phi (PF phi)) =>
         Algebra phi r -> phi ix -> ix -> r ix
-fold f p = f p . hmap (\ p (I0 x) -> fold f p x) . from p
+fold f p = f p . hmap (\ p (I0 x) -> fold f p x) p . from p
 
 foldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
          AlgebraF phi m r -> phi ix -> ix -> m (r ix)
-foldM f p x = hmapM (\ p (I0 x) -> foldM f p x) (from p x) >>= f p
+foldM f p x = hmapM (\ p (I0 x) -> foldM f p x) p (from p x) >>= f p
 
 type CoAlgebra'  phi f   r = forall ix. phi ix -> r ix -> f r ix
 type CoAlgebra   phi     r = CoAlgebra' phi (PF phi) r
@@ -60,11 +60,11 @@ type CoAlgebraF  phi   g r = CoAlgebraF' phi (PF phi) g r
 
 unfold :: (Fam phi, HFunctor phi (PF phi)) =>
           CoAlgebra phi r -> phi ix -> r ix -> ix
-unfold f p = to p . hmap (\ p x -> I0 (unfold f p x)) . f p
+unfold f p = to p . hmap (\ p x -> I0 (unfold f p x)) p . f p
 
 unfoldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
            CoAlgebraF phi m r -> phi ix -> r ix -> m ix
-unfoldM f p x = f p x >>= liftM (to p) . hmapM (\ p x -> liftM I0 (unfoldM f p x))
+unfoldM f p x = f p x >>= liftM (to p) . hmapM (\ p x -> liftM I0 (unfoldM f p x)) p
 
 type ParaAlgebra'  phi f   r = forall ix. phi ix -> f r ix -> ix -> r ix
 type ParaAlgebra   phi     r = ParaAlgebra' phi (PF phi) r
@@ -73,11 +73,11 @@ type ParaAlgebraF  phi   g r = ParaAlgebraF' phi (PF phi) g r
 
 para :: (Fam phi, HFunctor phi (PF phi)) => 
         ParaAlgebra phi r -> phi ix -> ix -> r ix
-para f p x = f p (hmap (\ p (I0 x) -> para f p x) (from p x)) x
+para f p x = f p (hmap (\ p (I0 x) -> para f p x) p (from p x)) x
 
 paraM :: (Fam phi, HFunctor phi (PF phi), Monad m) => 
          ParaAlgebraF phi m r -> phi ix -> ix -> m (r ix)
-paraM f p x = hmapM (\ p (I0 x) -> paraM f p x) (from p x) >>= \ r -> f p r x
+paraM f p x = hmapM (\ p (I0 x) -> paraM f p x) p (from p x) >>= \ r -> f p r x
 
 -- * Creating an algebra
 
