@@ -81,7 +81,7 @@ deriveEl :: Name -> [Name] -> Q [Dec]
 deriveEl s ns =
   mapM (elInstance s) ns
 
--- | Dervie only the 'Fam' instance. Not needed if 'deriveFamily'
+-- | Derive only the 'Fam' instance. Not needed if 'deriveFamily'
 -- is used.
 
 deriveFam :: Name -> [Name] -> Q [Dec]
