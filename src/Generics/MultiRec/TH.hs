@@ -13,7 +13,7 @@
 -- Portability :  non-portable
 --
 -- This module contains Template Haskell code that can be used to
--- automatically generate the boilerplate code for the multiplate
+-- automatically generate the boilerplate code for the multirec
 -- library. The constructor information can be generated per datatype,
 -- the rest per family of datatypes.
 --
