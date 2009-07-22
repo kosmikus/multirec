@@ -1,15 +1,15 @@
-name:			multirec
-version:		0.4
-license:		BSD3
-license-file:		LICENSE
-author:			Alexey Rodriguez,
-                        Stefan Holdermans,
-                        Andres Löh,
-                        Johan Jeuring
-maintainer:		generics@haskell.org
-category:		Generics
-synopsis:		Generic programming for families of recursive datatypes
-homepage:		http://www.cs.uu.nl/wiki/GenericProgramming/Multirec
+name:                 multirec
+version:              0.4
+license:              BSD3
+license-file:         LICENSE
+author:               Alexey Rodriguez,
+                      Stefan Holdermans,
+                      Andres Löh,
+                      Johan Jeuring
+maintainer:           generics@haskell.org
+category:             Generics
+synopsis:             Generic programming for families of recursive datatypes
+homepage:             http://www.cs.uu.nl/wiki/GenericProgramming/Multirec
 description:
   Many generic programs require information about the recursive positions
   of a datatype. Examples include the generic fold, generic rewriting or
@@ -34,41 +34,41 @@ description:
      /Generic programming with fixed points for mutually recursive datatypes/.
      ICFP 2009.
  
-stability:		experimental
-build-type:		Simple
-cabal-version:		>= 1.2.1
-tested-with:		GHC == 6.8.3, GHC == 6.10.3
-hs-source-dirs:		src
-exposed-modules:	Generics.MultiRec
+stability:            experimental
+build-type:           Simple
+cabal-version:        >= 1.2.1
+tested-with:          GHC == 6.8.3, GHC == 6.10.3
+hs-source-dirs:       src
+exposed-modules:      Generics.MultiRec
 
-			-- Base
-                        Generics.MultiRec.Base
-			Generics.MultiRec.Constructor
-                        Generics.MultiRec.TH
+                      -- Base
+                      Generics.MultiRec.Base
+                      Generics.MultiRec.Constructor
+                      Generics.MultiRec.TH
 
-			-- Generic functions
-			Generics.MultiRec.ConNames
-			Generics.MultiRec.HFunctor
-			Generics.MultiRec.HFix
-			Generics.MultiRec.Fold
-			Generics.MultiRec.FoldK
-			Generics.MultiRec.FoldAlg
-			Generics.MultiRec.FoldAlgK
-			Generics.MultiRec.Compos
-			Generics.MultiRec.Eq
-			Generics.MultiRec.Show
+                      -- Generic functions
+                      Generics.MultiRec.ConNames
+                      Generics.MultiRec.HFunctor
+                      Generics.MultiRec.HFix
+                      Generics.MultiRec.Fold
+                      Generics.MultiRec.FoldK
+                      Generics.MultiRec.FoldAlg
+                      Generics.MultiRec.FoldAlgK
+                      Generics.MultiRec.Compos
+                      Generics.MultiRec.Eq
+                      Generics.MultiRec.Show
+                      Generics.MultiRec.Read
 
-			-- Extra
-			Generics.MultiRec.TEq
+                      -- Extra
+                      Generics.MultiRec.TEq
 
-extra-source-files:	examples/AST.hs
-                        examples/ASTUse.hs
-                        examples/ASTTHUse.hs
-			examples/ASTExamples.hs
-			examples/Single.hs
-			examples/SingleUse.hs
-			examples/SingleTHUse.hs
-			examples/SingleExamples.hs
-			CREDITS
-build-depends:		base >= 3.0 && < 5,
-                        template-haskell >= 2.2 && < 2.4
+extra-source-files:   examples/AST.hs
+                      examples/ASTUse.hs
+                      examples/ASTTHUse.hs
+                      examples/ASTExamples.hs
+                      examples/Single.hs
+                      examples/SingleUse.hs
+                      examples/SingleTHUse.hs
+                      examples/SingleExamples.hs
+                      CREDITS
+build-depends:        base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.4

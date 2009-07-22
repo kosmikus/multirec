@@ -26,7 +26,8 @@ module Generics.MultiRec
     module Generics.MultiRec.Compos,
     module Generics.MultiRec.Eq,
     module Generics.MultiRec.HFix,
-    module Generics.MultiRec.Show
+    module Generics.MultiRec.Show,
+    module Generics.MultiRec.Read
   )
   where
 
@@ -37,5 +38,6 @@ import Generics.MultiRec.Compos
 import Generics.MultiRec.Eq
 import Generics.MultiRec.HFix
 import Generics.MultiRec.Show
+import Generics.MultiRec.Read
 
 
