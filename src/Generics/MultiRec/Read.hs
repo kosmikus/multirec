@@ -5,6 +5,8 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE PatternSignatures     #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -25,19 +27,15 @@ import Generics.MultiRec.Base
 
 import Data.Char
 import Control.Monad
-import Control.Arrow ((***))
 import Text.Read hiding (readsPrec, readPrec)
 import Prelude hiding (readsPrec)
 import qualified Prelude as P (readsPrec)
-import Text.Read.Lex
-import Text.ParserCombinators.ReadPrec
+
 
 -- Based on Rui Barbosa's solution.
 
 
 -- Count the number of terms in a product
-
-data K0F a (f :: (* -> *) -> * -> *) = K0F {unK0F :: a}
 
 class CountAtoms (f :: (* -> *) -> * -> *) where 
   countatoms :: f r ix -> Int
