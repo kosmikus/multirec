@@ -24,7 +24,7 @@ import Generics.MultiRec.Show as GS
 
 -- | Example expression
 
-example = Let (Seq ("x" := Mul (Const 6) (Const 9)) None)
+example = Let (Seq ["x" := Mul (Const 6) (Const 9)])
               (Add (EVar "x") (EVar "y"))
 
 -- | Renaming variables using 'compos'
@@ -66,7 +66,7 @@ evalAlgebra1 _ =
            &.  con (\ (I (DV e) :*: I (EV x)) -> EV (\ env -> x (e env)))
            )
   &.  tag  (   con (\ (I (VV x) :*: I (EV v)) -> DV (\ env -> (x, v env) : env ))
-           &.  con (\ (I (DV f) :*: I (DV g)) -> DV (g . f))
+           &.  con (\ (D fs)                  -> DV (foldl (\ f (I (DV g)) -> f . g) id fs))
            &.  con (\ U                       -> DV id)
            )
   &.  tag          (\ (K x)                   -> VV x)
@@ -83,7 +83,7 @@ evalAlgebra2 _ =
      &  (\ (DV e) (EV x) -> EV (\ env -> x (e env)))
      )
   &  (  (\ (VV x) (EV v) -> DV (\ env -> (x, v env) : env ))
-     &  (\ (DV f) (DV g) -> DV (g . f))
+     &  (\ fs            -> DV (foldl (\ f (DV g) -> f . g) id fs))
      &  (                   DV id)
      )
   &     (\ x             -> VV x)
@@ -108,6 +108,7 @@ testEval1 = eval1 example [("y", -12)]
 testEval2 :: Int
 testEval2 = eval2 example [("y", -12)] 
 
+{-
 -- | Equality instance for 'Expr'
 
 instance Eq Expr where
@@ -117,6 +118,7 @@ instance Eq Expr where
 
 testEq :: (Bool, Bool)
 testEq = (example == example, example == testRename)
+-}
 
 -- | Test for generic show
 

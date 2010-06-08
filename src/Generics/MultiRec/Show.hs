@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -27,6 +28,7 @@ import Generics.MultiRec.FoldK
 
 import qualified Prelude as P
 import Prelude hiding (show, showsPrec)
+import Data.Traversable (Traversable(..))
 
 -- * Generic show
 
@@ -54,6 +56,9 @@ instance (HShow phi f, HShow phi g) => HShow phi (f :*: g) where
 instance HShow phi f => HShow phi (f :>: ix) where
   hShowsPrecAlg ix (Tag x) = hShowsPrecAlg ix x
 
+instance (Show1 f, Traversable f, HShow phi g) => HShow phi (f :.: g) where
+  hShowsPrecAlg ix (D x) = undefined
+ 
 instance (Constructor c, HShow phi f) => HShow phi (C c f) where
   hShowsPrecAlg ix cx@(C x) =
     case conFixity cx of
@@ -63,6 +68,33 @@ instance (Constructor c, HShow phi f) => HShow phi (C c f) where
                                      (spaces (head fields p : (conName cx ++) : map ($ p) (tail fields)))]
    where
     fields = hShowsPrecAlg ix x
+
+data ShowD a where
+  ShowD :: (Show a) => ShowD a
+
+data ShowE a where
+  ShowE :: a -> (Int -> a -> ShowS) -> ShowE a
+
+class Show0 a where
+  show0 :: ShowD a
+
+instance Show (ShowE a) where
+  showsPrec n (ShowE a sp) = sp n a
+
+instance Show a => Show0 a where
+  show0 = ShowD
+
+class Show1 f where
+  show1 :: ShowD a -> ShowD (f a)
+
+instance Show1 [] where
+  show1 ShowD = ShowD
+
+instance Show1 Maybe where
+  show1 ShowD = ShowD
+
+show1e :: (Show1 f) => ShowE a -> ShowD (f a)
+show1e x = undefined
 
 showsPrec :: (Fam phi, HShow phi (PF phi)) => phi ix -> Int -> ix -> ShowS
 showsPrec p n x = spaces (map ($ n) (fold hShowsPrecAlg p x))

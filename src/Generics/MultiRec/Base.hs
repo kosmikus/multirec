@@ -31,6 +31,7 @@ module Generics.MultiRec.Base
    I(..),
    K(..), U(..), (:+:)(..), (:*:)(..),
    (:>:)(..), unTag,
+   (:.:)(..),
    C(..), unC,
 
    -- ** Constructor information
@@ -81,6 +82,10 @@ data f :>: ix :: (* -> *) -> * -> * where
 -- | Destructor for '(:>:)'.
 unTag :: (f :>: ix) r ix -> f r ix
 unTag (Tag x) = x
+
+-- | Represents composition with functors
+-- of kind * -> *.
+data (f :.: g) (r :: * -> *) ix = D (f (g r ix))
 
 -- | Represents constructors.
 data C c f     (r :: * -> *) ix where

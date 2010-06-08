@@ -39,6 +39,9 @@ type family Alg (f :: (* -> *) -> * -> *)
 -- | For a constant, we take the constant value to a result.
 type instance Alg (K a) (r :: * -> *) ix = a -> r ix
 
+-- type instance Alg (f :.: g) r ix = f (r ix) -> r ix -- f (Comp g r ix) -> r ix
+type instance Alg (f :.: I xi) r ix = f (r xi) -> r ix
+
 -- | For a unit, no arguments are available.
 type instance Alg U (r :: * -> *) ix = r ix
 
@@ -51,17 +54,24 @@ type instance Alg (f :+: g) r ix = (Alg f r ix, Alg g r ix)
 
 -- | For a product where the left hand side is a constant, we
 --   take the value as an additional argument.
-type instance Alg (K a :*: g) r ix = a -> Alg g r ix
-
--- | For a product where the left hand side is an identity, we
---   take the recursive result as an additional argument.
-type instance Alg (I xi :*: g) r ix = r xi -> Alg g r ix
+type instance Alg (f :*: g) r ix = Comp f r ix -> Alg g r ix
 
 -- | A tag changes the index of the final result.
 type instance Alg (f :>: xi) r ix = Alg f r xi
 
 -- | Constructors are ignored.
 type instance Alg (C c f) r ix = Alg f r ix
+
+type family Comp (f :: (* -> *) -> * -> *) 
+                 (r :: * -> *)      -- recursive positions
+                 (ix :: *)          -- index
+                 :: *
+
+type instance Comp (I xi)    r ix = r xi
+
+type instance Comp (K a)     r ix = a
+
+type instance Comp (f :.: g) r ix = f (Comp g r ix)
 
 -- | The algebras passed to the fold have to work for all index types
 --   in the family. The additional witness argument is required only
@@ -84,6 +94,9 @@ instance Fold U where
 
 instance Fold (I xi) where
   alg f (I x) = f x
+
+instance (Functor f) => Fold (f :.: I xi) where
+  alg f (D x) = f (fmap unI x)
 
 instance (Fold f, Fold g) => Fold (f :+: g) where
   alg (f, g) (L x) = alg f x

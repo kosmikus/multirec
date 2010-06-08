@@ -22,7 +22,7 @@ data Expr   =  Const  Int
   deriving Show
 
 data Decl   =  Var := Expr
-            |  Seq    Decl  Decl
+            |  Seq    [Decl]
             |  None
   deriving Show
 

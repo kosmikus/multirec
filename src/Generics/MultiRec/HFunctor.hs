@@ -21,6 +21,7 @@ module Generics.MultiRec.HFunctor where
 
 import Control.Monad (liftM, liftM2)
 import Control.Applicative (Applicative(..), (<$>), (<*>), WrappedMonad(..))
+import Data.Traversable (Traversable(..))
 
 import Generics.MultiRec.Base
 
@@ -52,6 +53,9 @@ instance (HFunctor phi f, HFunctor phi g) => HFunctor phi (f :*: g) where
 
 instance HFunctor phi f => HFunctor phi (f :>: ix) where
   hmapA f p (Tag x) = Tag <$> hmapA f p x
+
+instance (Traversable f, HFunctor phi g) => HFunctor phi (f :.: g) where
+  hmapA f p (D x) = D <$> traverse (hmapA f p) x
 
 instance (Constructor c, HFunctor phi f) => HFunctor phi (C c f) where
   hmapA f p (C x) = C <$> hmapA f p x

@@ -58,7 +58,7 @@ type instance PF AST  =
        :+:  C Let     (I Decl :*: I Expr)
       ) :>: Expr
   :+: (     C Assign  (I Var  :*: I Expr)
-       :+:  C Seq     (I Decl :*: I Decl)
+       :+:  C Seq     ([] :.: I Decl)
        :+:  C None    U
       ) :>: Decl
   :+: (               (K String)
@@ -81,7 +81,7 @@ instance Fam AST where
   from Expr (Let d e)  =  L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e))))))))
 
   from Decl (x := e)   =  R (L (Tag (L    (C (I (I0 x) :*: I (I0 e))))))
-  from Decl (Seq c d)  =  R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d)))))))
+  from Decl (Seq ds)   =  R (L (Tag (R (L (C (D (map (I . I0) ds)))))))
   from Decl (None)     =  R (L (Tag (R (R (C U)))))
 
   from Var  x          =  R (R (Tag (K x)))
@@ -93,7 +93,7 @@ instance Fam AST where
   to Expr (L (Tag (R (R (R (R (C (I (I0 d) :*: I (I0 e)))))))))  =  Let d e
 
   to Decl (R (L (Tag (L    (C (I (I0 x) :*: I (I0 e)))))))       =  x := e
-  to Decl (R (L (Tag (R (L (C (I (I0 c) :*: I (I0 d))))))))      =  Seq c d
+  to Decl (R (L (Tag (R (L (C (D ds)))))))                       =  Seq (map (unI0 . unI) ds)
   to Decl (R (L (Tag (R (R (C U))))))                            =  None
 
   to Var  (R (R (Tag (K x))))                                    =  x
