@@ -44,6 +44,9 @@ instance ConNames U where
 instance ConNames (f :*: g) where
   hconNames _ = []
 
+instance ConNames (f :.: g) where
+  hconNames _ = []
+
 instance ConNames (I a) where
   hconNames _ = []
 

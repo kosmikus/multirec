@@ -29,6 +29,20 @@ class HEq phi f where
   heq :: (forall ix. phi ix -> r ix -> r ix -> Bool) ->
          phi ix -> f r ix -> f r ix -> Bool
 
+class Eq1 f where
+  eq1 :: (a -> a -> Bool) -> f a -> f a -> Bool
+
+-- TODO: Think about more generic instances
+instance Eq1 [] where
+  eq1 eq []       []       = True
+  eq1 eq (x1:xs1) (x2:xs2) = eq x1 x2 && eq1 eq xs1 xs2
+  eq1 eq _        _        = False
+
+instance Eq1 Maybe where
+  eq1 eq Nothing   Nothing   = True
+  eq1 eq (Just x1) (Just x2) = eq x1 x2
+  eq1 eq _         _         = False
+
 instance El phi xi => HEq phi (I xi) where
   heq eq _ (I x1) (I x2) = eq proof x1 x2
 
@@ -47,6 +61,9 @@ instance (HEq phi f, HEq phi g) => HEq phi (f :+: g) where
 
 instance (HEq phi f, HEq phi g) => HEq phi (f :*: g) where
   heq eq p (x1 :*: y1) (x2 :*: y2) = heq eq p x1 x2 && heq eq p y1 y2
+
+instance (Eq1 f, HEq phi g) => HEq phi (f :.: g) where
+  heq eq p (D x1) (D x2) = eq1 (heq eq p) x1 x2
 
 -- The following instance does not compile with ghc-6.8.2
 instance HEq phi f => HEq phi (f :>: ix) where

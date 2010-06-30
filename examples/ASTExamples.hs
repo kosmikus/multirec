@@ -24,8 +24,8 @@ import Generics.MultiRec.Show as GS
 
 -- | Example expression
 
-example = Let (Seq ["x" := Mul (Const 6) (Const 9)])
-              (Add (EVar "x") (EVar "y"))
+example = Let (Seq ["x" := Mul (Const 6) (Const 9), "z" := Const 1])
+              (Mul (EVar "z") (Add (EVar "x") (EVar "y")))
 
 -- | Renaming variables using 'compos'
 
@@ -108,7 +108,6 @@ testEval1 = eval1 example [("y", -12)]
 testEval2 :: Int
 testEval2 = eval2 example [("y", -12)] 
 
-{-
 -- | Equality instance for 'Expr'
 
 instance Eq Expr where
@@ -118,7 +117,6 @@ instance Eq Expr where
 
 testEq :: (Bool, Bool)
 testEq = (example == example, example == testRename)
--}
 
 -- | Test for generic show
 

@@ -32,6 +32,10 @@ import Data.Traversable (Traversable(..))
 
 -- * Generic show
 
+-- | The list in the result type allows us to get at
+-- the fields of a constructor individually, which in
+-- turn allows us to insert additional stuff in between
+-- if record notation is used.
 class HFunctor phi f => HShow phi f where
   hShowsPrecAlg :: Algebra' phi f [Int -> ShowS]
 
@@ -57,7 +61,7 @@ instance HShow phi f => HShow phi (f :>: ix) where
   hShowsPrecAlg ix (Tag x) = hShowsPrecAlg ix x
 
 instance (Show1 f, Traversable f, HShow phi g) => HShow phi (f :.: g) where
-  hShowsPrecAlg ix (D x) = undefined
+  hShowsPrecAlg ix (D x) = [show1 (fmap (hShowsPrecAlg ix) x)]
  
 instance (Constructor c, HShow phi f) => HShow phi (C c f) where
   hShowsPrecAlg ix cx@(C x) =
@@ -69,32 +73,16 @@ instance (Constructor c, HShow phi f) => HShow phi (C c f) where
    where
     fields = hShowsPrecAlg ix x
 
-data ShowD a where
-  ShowD :: (Show a) => ShowD a
-
-data ShowE a where
-  ShowE :: a -> (Int -> a -> ShowS) -> ShowE a
-
-class Show0 a where
-  show0 :: ShowD a
-
-instance Show (ShowE a) where
-  showsPrec n (ShowE a sp) = sp n a
-
-instance Show a => Show0 a where
-  show0 = ShowD
-
 class Show1 f where
-  show1 :: ShowD a -> ShowD (f a)
-
-instance Show1 [] where
-  show1 ShowD = ShowD
+  show1 :: f [Int -> ShowS] -> Int -> ShowS
 
 instance Show1 Maybe where
-  show1 ShowD = ShowD
+  show1 Nothing  _ = ("Nothing" ++)
+  show1 (Just x) n = showParen (n > 10) (spaces (("Just" ++) : map ($ 11) x))
 
-show1e :: (Show1 f) => ShowE a -> ShowD (f a)
-show1e x = undefined
+instance Show1 [] where
+  show1 [] _ = ("[]" ++)
+  show1 xs _ = ('[':) . commas (map ($ 0) (concat xs)) . (']':)
 
 showsPrec :: (Fam phi, HShow phi (PF phi)) => phi ix -> Int -> ix -> ShowS
 showsPrec p n x = spaces (map ($ n) (fold hShowsPrecAlg p x))
@@ -105,6 +93,13 @@ show ix x = showsPrec ix 0 x ""
 -- * Utilities
 
 spaces :: [ShowS] -> ShowS
-spaces []     = id
-spaces [x]    = x
-spaces (x:xs) = x . (' ':) . spaces xs
+spaces = intersperse " "
+
+commas :: [ShowS] -> ShowS
+commas = intersperse ", "
+
+intersperse :: String -> [ShowS] -> ShowS
+intersperse s []     = id
+intersperse s [x]    = x
+intersperse s (x:xs) = x . (s ++) . spaces xs
+
