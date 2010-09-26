@@ -1,5 +1,5 @@
 name:                 multirec
-version:              0.4.1
+version:              0.4.2
 license:              BSD3
 license-file:         LICENSE
 author:               Alexey Rodriguez,
@@ -70,4 +70,4 @@ extra-source-files:   examples/AST.hs
                       examples/SingleTHUse.hs
                       examples/SingleExamples.hs
                       CREDITS
-build-depends:        base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.5
+build-depends:        base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.6
