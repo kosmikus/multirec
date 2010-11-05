@@ -98,3 +98,10 @@ instance Fam AST where
 
   to Var  (R (R (Tag (K x))))                                    =  x
 
+-- ** EqS instance
+
+instance EqS AST where
+  eqS Expr Expr = Just Refl
+  eqS Decl Decl = Just Refl
+  eqS Var  Var  = Just Refl
+  eqS _    _    = Nothing

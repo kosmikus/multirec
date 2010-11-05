@@ -21,6 +21,7 @@ import Generics.MultiRec.Fold (con, tag)
 import Generics.MultiRec.FoldAlg as FA
 import Generics.MultiRec.Eq
 import Generics.MultiRec.Show as GS
+import Generics.MultiRec.Read as GR
 
 -- | Example expression
 
@@ -122,3 +123,8 @@ testEq = (example == example, example == testRename)
 
 testShow :: IO ()
 testShow = putStrLn $ GS.show Expr example
+
+-- | Test for generic show, read and equality
+
+testReadShowEq :: Bool
+testReadShowEq = GR.read Expr (GS.show Expr example) == example
