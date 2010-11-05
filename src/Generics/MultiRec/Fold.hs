@@ -49,18 +49,6 @@ fold :: (Fam phi, HFunctor phi (PF phi)) =>
         Algebra phi r -> phi ix -> ix -> r ix
 fold f p = f p . hmap (\ p (I0 x) -> fold f p x) p . from p
 
-{-
-build :: (Fam phi) =>
-         (forall r. Algebra phi r -> r ix) -> ix
-build f = unI0 (f idAlg)
-
-{-# RULES
-"Generic fold/build fusion"
-  forall (f :: Algebra phi s) (g :: forall r. Algebra phi r -> r ix) p.
-    fold f p (build g) = g f
-  #-}
--}
-
 foldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
          AlgebraF phi m r -> phi ix -> ix -> m (r ix)
 foldM f p x = hmapM (\ p (I0 x) -> foldM f p x) p (from p x) >>= f p
@@ -109,37 +97,3 @@ tag f (Tag x) = f x
 con :: AlgPart a r ix -> AlgPart (C c a) r ix
 con f (C x) = f x
 
-{-
--- * Generic algebras
-
-idAlg :: (Fam phi) => Algebra phi I0
-idAlg p pf = I0 (to p pf)
-
-kAlg :: a -> Algebra' phi f (K0 a)
-kAlg x p pf = K0 x
-
-data Pair0 f g ix = Pair0 (f ix) (g ix)
-
-fst0 (Pair0 x y) = x
-snd0 (Pair0 x y) = y
-
-data App0 f g ix = App0 (f ix -> g ix)
-
-pairAlg :: HFunctor phi f =>
-           Algebra' phi f a -> Algebra' phi f b -> Algebra' phi f (Pair0 a b)
-pairAlg f g p pf = Pair0 (f p (hmap' (const fst0) p pf))
-                         (g p (hmap' (const snd0) p pf))
-
-appAlg :: HFunctor phi f =>
-          Algebra' phi f (App0 a b) -> Algebra' phi f a -> Algebra' phi f b
-appAlg f x p pf = undefined
-
-hmap' :: (HFunctor phi f) => (forall ix. phi ix -> r ix -> r' ix) ->
-         phi ix -> f r ix -> f r' ix
-hmap' f _ x = hmap f x
-
-{-
-type Algebra'  phi f   r = forall ix. phi ix -> f r ix -> r ix
-type Algebra   phi     r = Algebra' phi (PF phi) r
--}
--}
