@@ -38,8 +38,19 @@ stability:            experimental
 build-type:           Simple
 cabal-version:        >= 1.2.1
 tested-with:          GHC == 6.10.4, GHC == 7.0.1
-hs-source-dirs:       src
-exposed-modules:      Generics.MultiRec
+extra-source-files:   examples/AST.hs
+                      examples/ASTUse.hs
+                      examples/ASTTHUse.hs
+                      examples/ASTExamples.hs
+                      examples/Single.hs
+                      examples/SingleUse.hs
+                      examples/SingleTHUse.hs
+                      examples/SingleExamples.hs
+                      CREDITS
+
+library
+  hs-source-dirs:     src
+  exposed-modules:    Generics.MultiRec
 
                       -- Base
                       Generics.MultiRec.Base
@@ -62,13 +73,4 @@ exposed-modules:      Generics.MultiRec
                       -- Extra
                       Generics.MultiRec.TEq
 
-extra-source-files:   examples/AST.hs
-                      examples/ASTUse.hs
-                      examples/ASTTHUse.hs
-                      examples/ASTExamples.hs
-                      examples/Single.hs
-                      examples/SingleUse.hs
-                      examples/SingleTHUse.hs
-                      examples/SingleExamples.hs
-                      CREDITS
-build-depends:        base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.6
+  build-depends:      base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.6
