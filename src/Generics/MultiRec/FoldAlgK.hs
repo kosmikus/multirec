@@ -11,7 +11,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.FoldAlgK
--- Copyright   :  (c) 2009 Universiteit Utrecht
+-- Copyright   :  (c) 2009--2010 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
