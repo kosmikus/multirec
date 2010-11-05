@@ -49,6 +49,7 @@ fold :: (Fam phi, HFunctor phi (PF phi)) =>
         Algebra phi r -> phi ix -> ix -> r ix
 fold f p = f p . hmap (\ p (I0 x) -> fold f p x) p . from p
 
+{-
 build :: (Fam phi) =>
          (forall r. Algebra phi r -> r ix) -> ix
 build f = unI0 (f idAlg)
@@ -58,6 +59,7 @@ build f = unI0 (f idAlg)
   forall (f :: Algebra phi s) (g :: forall r. Algebra phi r -> r ix) p.
     fold f p (build g) = g f
   #-}
+-}
 
 foldM :: (Fam phi, HFunctor phi (PF phi), Monad m) =>
          AlgebraF phi m r -> phi ix -> ix -> m (r ix)
@@ -107,6 +109,7 @@ tag f (Tag x) = f x
 con :: AlgPart a r ix -> AlgPart (C c a) r ix
 con f (C x) = f x
 
+{-
 -- * Generic algebras
 
 idAlg :: (Fam phi) => Algebra phi I0
@@ -138,4 +141,5 @@ hmap' f _ x = hmap f x
 {-
 type Algebra'  phi f   r = forall ix. phi ix -> f r ix -> r ix
 type Algebra   phi     r = Algebra' phi (PF phi) r
+-}
 -}
