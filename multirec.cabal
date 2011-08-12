@@ -10,6 +10,7 @@ maintainer:           generics@haskell.org
 category:             Generics
 synopsis:             Generic programming for families of recursive datatypes
 homepage:             http://www.cs.uu.nl/wiki/GenericProgramming/Multirec
+bug-reports:          https://github.com/kosmikus/multirec/issues
 description:
   Many generic programs require information about the recursive positions
   of a datatype. Examples include the generic fold, generic rewriting or
@@ -37,7 +38,7 @@ description:
 stability:            experimental
 build-type:           Simple
 cabal-version:        >= 1.2.1
-tested-with:          GHC == 6.10.4, GHC == 7.0.1
+tested-with:          GHC == 7.0.4
 extra-source-files:   examples/AST.hs
                       examples/ASTUse.hs
                       examples/ASTTHUse.hs
@@ -47,6 +48,10 @@ extra-source-files:   examples/AST.hs
                       examples/SingleTHUse.hs
                       examples/SingleExamples.hs
                       CREDITS
+
+source-repository head
+  type:               git
+  location:           https://github.com/kosmikus/multirec
 
 library
   hs-source-dirs:     src
