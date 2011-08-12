@@ -9,7 +9,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.FoldK
--- Copyright   :  (c) 2009 Universiteit Utrecht
+-- Copyright   :  (c) 2009--2010 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -27,7 +27,6 @@ import Generics.MultiRec.Base
 import Generics.MultiRec.HFunctor
 
 import Control.Monad hiding (foldM)
-import Control.Applicative
 
 -- * Generic fold and unfold
 

@@ -1,5 +1,5 @@
 name:                 multirec
-version:              0.4.1
+version:              0.5.1
 license:              BSD3
 license-file:         LICENSE
 author:               Alexey Rodriguez,
@@ -10,6 +10,7 @@ maintainer:           generics@haskell.org
 category:             Generics
 synopsis:             Generic programming for families of recursive datatypes
 homepage:             http://www.cs.uu.nl/wiki/GenericProgramming/Multirec
+bug-reports:          https://github.com/kosmikus/multirec/issues
 description:
   Many generic programs require information about the recursive positions
   of a datatype. Examples include the generic fold, generic rewriting or
@@ -36,10 +37,26 @@ description:
  
 stability:            experimental
 build-type:           Simple
-cabal-version:        >= 1.2.1
-tested-with:          GHC == 6.8.3, GHC == 6.10.3, GHC == 6.12.1
-hs-source-dirs:       src
-exposed-modules:      Generics.MultiRec
+cabal-version:        >= 1.6
+tested-with:          GHC == 7.0.4
+extra-source-files:   examples/AST.hs
+                      examples/ASTUse.hs
+                      examples/ASTTHUse.hs
+                      examples/ASTExamples.hs
+                      examples/Single.hs
+                      examples/SingleUse.hs
+                      examples/SingleTHUse.hs
+                      examples/SingleExamples.hs
+                      CREDITS
+
+source-repository head
+  type:               git
+  location:           https://github.com/kosmikus/multirec
+
+library
+  hs-source-dirs:     src
+  -- ghc-options:        -Wall -fno-warn-name-shadowing -fno-warn-unused-binds -fno-warn-unused-matches
+  exposed-modules:    Generics.MultiRec
 
                       -- Base
                       Generics.MultiRec.Base
@@ -56,18 +73,10 @@ exposed-modules:      Generics.MultiRec
                       Generics.MultiRec.FoldAlgK
                       Generics.MultiRec.Compos
                       Generics.MultiRec.Eq
+                      Generics.MultiRec.Read
                       Generics.MultiRec.Show
 
                       -- Extra
                       Generics.MultiRec.TEq
 
-extra-source-files:   examples/AST.hs
-                      examples/ASTUse.hs
-                      examples/ASTTHUse.hs
-                      examples/ASTExamples.hs
-                      examples/Single.hs
-                      examples/SingleUse.hs
-                      examples/SingleTHUse.hs
-                      examples/SingleExamples.hs
-                      CREDITS
-build-depends:        base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.5
+  build-depends:      base >= 3.0 && < 5, template-haskell >= 2.2 && < 2.7

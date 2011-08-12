@@ -9,7 +9,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.Fold
--- Copyright   :  (c) 2008--2009 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2010 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -96,3 +96,4 @@ tag f (Tag x) = f x
 
 con :: AlgPart a r ix -> AlgPart (C c a) r ix
 con f (C x) = f x
+

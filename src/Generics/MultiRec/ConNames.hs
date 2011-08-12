@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Generics.MultiRec.ConNames
--- Copyright   :  (c) 2008--2009 Universiteit Utrecht
+-- Copyright   :  (c) 2008--2010 Universiteit Utrecht
 -- License     :  BSD3
 --
 -- Maintainer  :  generics@haskell.org
@@ -23,7 +23,6 @@
 module Generics.MultiRec.ConNames where
 
 import Generics.MultiRec.Base
-import Generics.MultiRec.Constructor
 
 class ConNames (f :: (* -> *) -> * -> *) where
   hconNames :: f r ix -> [String]
