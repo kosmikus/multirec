@@ -27,7 +27,6 @@ import Generics.MultiRec.Base
 import Generics.MultiRec.HFunctor
 
 import Control.Monad hiding (foldM)
-import Control.Applicative
 
 -- * Generic fold and unfold
 

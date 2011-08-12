@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------------
 module Generics.MultiRec.HFunctor where
 
-import Control.Monad (liftM, liftM2)
 import Control.Applicative (Applicative(..), (<$>), (<*>), WrappedMonad(..))
 
 import Generics.MultiRec.Base

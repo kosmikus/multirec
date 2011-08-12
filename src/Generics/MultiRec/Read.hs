@@ -156,6 +156,7 @@ readNoArgsCons p f name = parens $
                                 guard (n==name)
                                 return U
 
+appPrec :: Int
 appPrec = 10
 
 

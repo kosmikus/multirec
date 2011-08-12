@@ -23,7 +23,6 @@
 module Generics.MultiRec.ConNames where
 
 import Generics.MultiRec.Base
-import Generics.MultiRec.Constructor
 
 class ConNames (f :: (* -> *) -> * -> *) where
   hconNames :: f r ix -> [String]

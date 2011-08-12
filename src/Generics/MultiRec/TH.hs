@@ -30,7 +30,6 @@ module Generics.MultiRec.TH
   ) where
 
 import Generics.MultiRec.Base
-import Generics.MultiRec.Constructor
 import Language.Haskell.TH hiding (Fixity())
 import Language.Haskell.TH.Syntax (Lift(..))
 import Control.Monad
