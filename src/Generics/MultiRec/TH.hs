@@ -192,6 +192,7 @@ pfCon ns (InfixC t1 n t2) =
 
 pfField :: [Name] -> Type -> Q Type
 pfField ns t@(ConT n) | n `elem` ns = conT ''I `appT` return t
+pfField ns t@(AppT f a)             = conT ''(:.:) `appT` return f `appT` pfField ns a
 pfField ns t                        = conT ''K `appT` return t
 
 elInstance :: Name -> Name -> Q Dec
@@ -259,7 +260,7 @@ toCon wrap ns n m i (NormalC cn fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
       [conP n [], wrap $ lrP m i $ conP 'C [foldr1 prod (zipWith (toField ns) [0..] (map snd fs))]]
-      (normalB $ foldl appE (conE cn) (map (varE . field) [0..length fs - 1])) []
+      (normalB $ foldl appE (conE cn) (zipWith toFieldR [0..] (map snd fs))) []
   where
     prod x y = conP '(:*:) [x,y]
 toCon wrap ns n m i r@(RecC _ _) =
@@ -268,12 +269,18 @@ toCon wrap ns n m i (InfixC t1 cn t2) =
   toCon wrap ns n m i (NormalC cn [t1,t2])
 
 fromField :: [Name] -> Int -> Type -> Q Exp
-fromField ns nr t@(ConT n) | n `elem` ns = conE 'I `appE` (conE 'I0 `appE` varE (field nr))
-fromField ns nr t                        = conE 'K `appE` varE (field nr)
+fromField ns nr t@(ConT n) | n `elem` ns = [| I (I0 $(varE (field nr))) |]
+fromField ns nr t@(AppT f a)             = [| D (fmap (I . I0) $(varE (field nr))) |]
+fromField ns nr t                        = [| K $(varE (field nr)) |]
 
 toField :: [Name] -> Int -> Type -> Q Pat
 toField ns nr t@(ConT n) | n `elem` ns = conP 'I [conP 'I0 [varP (field nr)]]
+toField ns nr t@(AppT f a)             = conP 'D [varP (field nr)]
 toField ns nr t                        = conP 'K [varP (field nr)]
+
+toFieldR :: Int -> Type -> Q Exp
+toFieldR nr t@(AppT f a) = [| fmap (unI0 . unI) $(varE (field nr)) |]
+toFieldR nr _            = varE (field nr)
 
 field :: Int -> Name
 field n = mkName $ "f" ++ show n
