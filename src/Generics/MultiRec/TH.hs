@@ -34,7 +34,7 @@ import Language.Haskell.TH hiding (Fixity())
 import Language.Haskell.TH.Syntax (Lift(..))
 import Control.Monad
 
--- | Given a list of datatype names, derive datatypes and 
+-- | Given a list of datatype names, derive datatypes and
 -- instances of class 'Constructor'.
 
 deriveConstructors :: [Name] -> Q [Dec]
@@ -86,7 +86,7 @@ deriveEl s ns =
 deriveFam :: Name -> [Name] -> Q [Dec]
 deriveFam s ns =
   do
-    fcs <- liftM concat $ zipWithM (mkFrom ns (length ns)) [0..] ns  
+    fcs <- liftM concat $ zipWithM (mkFrom ns (length ns)) [0..] ns
     tcs <- liftM concat $ zipWithM (mkTo   ns (length ns)) [0..] ns
     liftM (:[]) $
       instanceD (cxt []) (conT ''Fam `appT` conT s)
@@ -125,7 +125,7 @@ stripRecordNames c = c
 
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
-  dataD (cxt []) (mkName (nameBase n)) [] [] [] 
+  dataD (cxt []) (mkName (nameBase n)) [] [] []
 mkData r@(RecC _ _) =
   mkData (stripRecordNames r)
 mkData (InfixC t1 n t2) =
@@ -171,7 +171,7 @@ pfType ns n =
                   foldr1 sum (map (pfCon ns) cs)
                 TyConI (TySynD t _ _) ->
                   conT ''K `appT` conT t
-                _ -> error "unknown construct" 
+                _ -> error "unknown construct"
       appT (appT (conT ''(:>:)) b) (conT $ mkName (nameBase n))
   where
     sum :: Q Type -> Q Type -> Q Type
@@ -226,7 +226,7 @@ mkTo ns m i n =
                   zipWith (toCon wrapP ns dn (length cs)) [0..] cs
                 TyConI (TySynD t _ _) ->
                   [clause [conP dn [], wrapP $ conP 'K [varP (field 0)]] (normalB $ varE (field 0)) []]
-                _ -> error "unknown construct" 
+                _ -> error "unknown construct"
       return b
 
 mkProof :: Name -> Q Dec
