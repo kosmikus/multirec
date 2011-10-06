@@ -259,8 +259,8 @@ toCon wrap ns n m i (NormalC cn []) =
 toCon wrap ns n m i (NormalC cn fs) =
     -- runIO (putStrLn ("constructor " ++ show ix)) >>
     clause
-      [conP n [], wrap $ lrP m i $ conP 'C [foldr1 prod (zipWith (toField ns) [0..] (map snd fs))]]
-      (normalB $ foldl appE (conE cn) (zipWith toFieldR [0..] (map snd fs))) []
+      [conP n [], wrap $ lrP m i $ conP 'C [foldr1 prod (map (varP . field) [0..length fs - 1])]]
+      (normalB $ foldl appE (conE cn) (zipWith (toField ns) [0..] (map snd fs))) []
   where
     prod x y = conP '(:*:) [x,y]
 toCon wrap ns n m i r@(RecC _ _) =
@@ -269,18 +269,20 @@ toCon wrap ns n m i (InfixC t1 cn t2) =
   toCon wrap ns n m i (NormalC cn [t1,t2])
 
 fromField :: [Name] -> Int -> Type -> Q Exp
-fromField ns nr t@(ConT n) | n `elem` ns = [| I (I0 $(varE (field nr))) |]
-fromField ns nr t@(AppT f a)             = [| D (fmap (I . I0) $(varE (field nr))) |]
-fromField ns nr t                        = [| K $(varE (field nr)) |]
+fromField ns nr t = [| $(fromFieldFun ns t) $(varE (field nr)) |]
 
-toField :: [Name] -> Int -> Type -> Q Pat
-toField ns nr t@(ConT n) | n `elem` ns = conP 'I [conP 'I0 [varP (field nr)]]
-toField ns nr t@(AppT f a)             = conP 'D [varP (field nr)]
-toField ns nr t                        = conP 'K [varP (field nr)]
+fromFieldFun :: [Name] -> Type -> Q Exp
+fromFieldFun ns t@(ConT n)   | n `elem` ns = [| I . I0 |]
+fromFieldFun ns t@(AppT f a)               = [| D . fmap $(fromFieldFun ns a) |]
+fromFieldFun ns t                          = [| K |]
 
-toFieldR :: Int -> Type -> Q Exp
-toFieldR nr t@(AppT f a) = [| fmap (unI0 . unI) $(varE (field nr)) |]
-toFieldR nr _            = varE (field nr)
+toField :: [Name] -> Int -> Type -> Q Exp
+toField ns nr t = [| $(toFieldFun ns t) $(varE (field nr)) |]
+
+toFieldFun :: [Name] -> Type -> Q Exp
+toFieldFun ns t@(ConT n)   | n `elem` ns = [| unI0 . unI |]
+toFieldFun ns t@(AppT f a)               = [| fmap $(toFieldFun ns a) . unD |]
+toFieldFun ns t                          = [| unK |]
 
 field :: Int -> Name
 field n = mkName $ "f" ++ show n

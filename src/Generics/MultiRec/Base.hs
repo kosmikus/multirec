@@ -85,7 +85,7 @@ unTag (Tag x) = x
 
 -- | Represents composition with functors
 -- of kind * -> *.
-data (f :.: g) (r :: * -> *) ix = D (f (g r ix))
+data (f :.: g) (r :: * -> *) ix = D {unD :: f (g r ix)}
 
 -- | Represents constructors.
 data C c f     (r :: * -> *) ix where
