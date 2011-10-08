@@ -5,13 +5,14 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE EmptyDataDecls        #-}
+{-# LANGUAGE FlexibleInstances     #-}
 
 module ASTUse where
 
 import Generics.MultiRec.Base
 import AST
 
--- * Instantiating the library for AST 
+-- * Instantiating the library for AST
 
 -- ** Index type
 
