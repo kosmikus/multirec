@@ -18,9 +18,4 @@ import Generics.MultiRec.TH
 data LogicF :: * -> * where
   Logic :: LogicF Logic
 
--- ** Constructors
-$(deriveConstructors [''Logic])
-
--- ** Functor encoding and 'Ix' instances
-$(deriveSystem ''LogicF [''Logic] "PFLogic")
-type instance PF LogicF = PFLogic
+$(deriveAll ''LogicF)
