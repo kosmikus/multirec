@@ -21,7 +21,8 @@
 
 
 module Generics.MultiRec.TH
-  ( deriveConstructors,
+  ( deriveAll,
+    deriveConstructors,
     deriveFamily, deriveSystem,
     derivePF,
     deriveEl,
@@ -32,37 +33,55 @@ module Generics.MultiRec.TH
 import Generics.MultiRec.Base
 import Language.Haskell.TH hiding (Fixity())
 import Language.Haskell.TH.Syntax (Lift(..))
+import Control.Applicative
 import Control.Monad
 
+-- | Given the name of the family index GADT, derive everything.
+
+deriveAll :: Name -> Q [Dec]
+deriveAll n =
+  do
+    info <- reify n
+    let ns = map remakeName (extractConstructorNames info)
+    cs  <- deriveConstructors ns
+    pf  <- derivePFInstance n ns
+    el  <- deriveEl n ns
+    fam <- deriveFam n ns
+    eq  <- deriveEqS n ns
+    return $ cs ++ pf ++ el ++ fam ++ eq
+
 -- | Given a list of datatype names, derive datatypes and
--- instances of class 'Constructor'.
+-- instances of class 'Constructor'. Not needed if 'deriveAll'
+-- is used.
 
 deriveConstructors :: [Name] -> Q [Dec]
 deriveConstructors =
   liftM concat . mapM constrInstance
 
--- | Given the name of the index GADT, the names of the
+-- | Compatibility. Use 'deriveAll' instead.
+--
+-- Given the name of the index GADT, the names of the
 -- types in the family, and the name (as string) for the
 -- pattern functor to derive, generate the 'Ix' and 'PF'
 -- instances. /IMPORTANT/: It is assumed that the constructors
 -- of the GADT have the same names as the datatypes in the
 -- family.
-
+{-# DEPRECATED deriveFamily "Use deriveAll instead." #-}
 deriveFamily :: Name -> [Name] -> String -> Q [Dec]
 deriveFamily n ns pfn =
   do
     pf  <- derivePF pfn ns
     el  <- deriveEl n ns
     fam <- deriveFam n ns
-    eq  <- deriveEqS n (map (mkName . nameBase) ns)
+    eq  <- deriveEqS n (map remakeName ns)
     return $ pf ++ el ++ fam ++ eq
 
--- | Compatibility. Use deriveFamily instead.
-
+-- | Compatibility. Use 'deriveAll' instead.
+{-# DEPRECATED deriveSystem "Use deriveFamily instead" #-}
 deriveSystem :: Name -> [Name] -> String -> Q [Dec]
 deriveSystem = deriveFamily
 
--- | Derive only the 'PF' instance. Not needed if 'deriveFamily'
+-- | Derive only the 'PF' instance. Not needed if 'deriveAll'
 -- is used.
 
 derivePF :: String -> [Name] -> Q [Dec]
@@ -73,14 +92,22 @@ derivePF pfn ns =
     sum :: Q Type -> Q Type -> Q Type
     sum a b = conT ''(:+:) `appT` a `appT` b
 
--- | Derive only the 'El' instances. Not needed if 'deriveFamily'
+derivePFInstance :: Name -> [Name] -> Q [Dec]
+derivePFInstance n ns =
+    return <$>
+    tySynInstD ''PF [conT n] (foldr1 sum (map (pfType ns) ns))
+  where
+    sum :: Q Type -> Q Type -> Q Type
+    sum a b = conT ''(:+:) `appT` a `appT` b
+
+-- | Derive only the 'El' instances. Not needed if 'deriveAll'
 -- is used.
 
 deriveEl :: Name -> [Name] -> Q [Dec]
 deriveEl s ns =
   mapM (elInstance s) ns
 
--- | Derive only the 'Fam' instance. Not needed if 'deriveFamily'
+-- | Derive only the 'Fam' instance. Not needed if 'deriveAll'
 -- is used.
 
 deriveFam :: Name -> [Name] -> Q [Dec]
@@ -92,7 +119,7 @@ deriveFam s ns =
       instanceD (cxt []) (conT ''Fam `appT` conT s)
         [funD 'from fcs, funD 'to tcs]
 
--- | Derive only the 'EqS' instance. Not needed if 'deriveFamily'
+-- | Derive only the 'EqS' instance. Not needed if 'deriveAll'
 -- is used.
 
 deriveEqS :: Name -> [Name] -> Q [Dec]
@@ -105,6 +132,17 @@ deriveEqS s ns =
     falseClause  = clause [wildP,  wildP]        (normalB (conE 'Nothing)) []
     trues        = map trueClause ns
     falses       = if length trues == 1 then [] else [falseClause]
+
+extractConstructorNames :: Info -> [Name]
+extractConstructorNames (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom cs
+  where
+    extractFrom :: Con -> [Name]
+    extractFrom (ForallC _ _ c) = extractFrom c
+    extractFrom (InfixC _ n _)  = [n]
+    extractFrom (RecC n _)      = [n]
+    extractFrom (NormalC n [])  = [n]
+    extractFrom _               = []
+extractConstructorNames _                           = []
 
 constrInstance :: Name -> Q [Dec]
 constrInstance n =
@@ -125,7 +163,7 @@ stripRecordNames c = c
 
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
-  dataD (cxt []) (mkName (nameBase n)) [] [] []
+  dataD (cxt []) (remakeName n) [] [] []
 mkData r@(RecC _ _) =
   mkData (stripRecordNames r)
 mkData (InfixC t1 n t2) =
@@ -142,7 +180,7 @@ instance Lift Associativity where
 
 mkInstance :: Con -> Q Dec
 mkInstance (NormalC n _) =
-    instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
+    instanceD (cxt []) (appT (conT ''Constructor) (conT $ remakeName n))
       [funD 'conName [clause [wildP] (normalB (stringE (nameBase n))) []]]
 mkInstance r@(RecC _ _) =
   mkInstance (stripRecordNames r)
@@ -152,7 +190,7 @@ mkInstance (InfixC t1 n t2) =
       let fi = case i of
                  DataConI _ _ _ f -> convertFixity f
                  _ -> Prefix
-      instanceD (cxt []) (appT (conT ''Constructor) (conT $ mkName (nameBase n)))
+      instanceD (cxt []) (appT (conT ''Constructor) (conT $ remakeName n))
         [funD 'conName   [clause [wildP] (normalB (stringE (nameBase n))) []],
          funD 'conFixity [clause [wildP] (normalB [| fi |]) []]]
   where
@@ -172,16 +210,16 @@ pfType ns n =
                 TyConI (TySynD t _ _) ->
                   conT ''K `appT` conT t
                 _ -> error "unknown construct"
-      appT (appT (conT ''(:>:)) b) (conT $ mkName (nameBase n))
+      appT (appT (conT ''(:>:)) b) (conT $ remakeName n)
   where
     sum :: Q Type -> Q Type -> Q Type
     sum a b = conT ''(:+:) `appT` a `appT` b
 
 pfCon :: [Name] -> Con -> Q Type
 pfCon ns (NormalC n []) =
-    appT (appT (conT ''C) (conT $ mkName (nameBase n))) (conT ''U)
+    appT (appT (conT ''C) (conT $ remakeName n)) (conT ''U)
 pfCon ns (NormalC n fs) =
-    appT (appT (conT ''C) (conT $ mkName (nameBase n))) (foldr1 prod (map (pfField ns . snd) fs))
+    appT (appT (conT ''C) (conT $ remakeName n)) (foldr1 prod (map (pfField ns . snd) fs))
   where
     prod :: Q Type -> Q Type -> Q Type
     prod a b = conT ''(:*:) `appT` a `appT` b
@@ -191,7 +229,8 @@ pfCon ns (InfixC t1 n t2) =
     pfCon ns (NormalC n [t1,t2])
 
 pfField :: [Name] -> Type -> Q Type
-pfField ns t@(ConT n) | n `elem` ns = conT ''I `appT` return t
+pfField ns t@(ConT n)
+  | remakeName n `elem` ns          = conT ''I `appT` return t
 pfField ns t@(AppT f a)             = conT ''(:.:) `appT` return f `appT` pfField ns a
 pfField ns t                        = conT ''K `appT` return t
 
@@ -206,7 +245,7 @@ mkFrom ns m i n =
       -- runIO $ putStrLn $ "processing " ++ show n
       let wrapE e = lrE m i (conE 'Tag `appE` e)
       i <- reify n
-      let dn = mkName (nameBase n)
+      let dn = remakeName n
       let b = case i of
                 TyConI (DataD _ _ _ cs _) ->
                   zipWith (fromCon wrapE ns dn (length cs)) [0..] cs
@@ -221,7 +260,7 @@ mkTo ns m i n =
       -- runIO $ putStrLn $ "processing " ++ show n
       let wrapP p = lrP m i (conP 'Tag [p])
       i <- reify n
-      let dn = mkName (nameBase n)
+      let dn = remakeName n
       let b = case i of
                 TyConI (DataD _ _ _ cs _) ->
                   zipWith (toCon wrapP ns dn (length cs)) [0..] cs
@@ -232,7 +271,7 @@ mkTo ns m i n =
 
 mkProof :: Name -> Q Dec
 mkProof n =
-  funD 'proof [clause [] (normalB (conE (mkName (nameBase n)))) []]
+  funD 'proof [clause [] (normalB (conE (remakeName n))) []]
 
 fromCon :: (Q Exp -> Q Exp) -> [Name] -> Name -> Int -> Int -> Con -> Q Clause
 fromCon wrap ns n m i (NormalC cn []) =
@@ -272,17 +311,19 @@ fromField :: [Name] -> Int -> Type -> Q Exp
 fromField ns nr t = [| $(fromFieldFun ns t) $(varE (field nr)) |]
 
 fromFieldFun :: [Name] -> Type -> Q Exp
-fromFieldFun ns t@(ConT n)   | n `elem` ns = [| I . I0 |]
-fromFieldFun ns t@(AppT f a)               = [| D . fmap $(fromFieldFun ns a) |]
-fromFieldFun ns t                          = [| K |]
+fromFieldFun ns t@(ConT n)
+  | remakeName n `elem` ns   = [| I . I0 |]
+fromFieldFun ns t@(AppT f a) = [| D . fmap $(fromFieldFun ns a) |]
+fromFieldFun ns t            = [| K |]
 
 toField :: [Name] -> Int -> Type -> Q Exp
 toField ns nr t = [| $(toFieldFun ns t) $(varE (field nr)) |]
 
 toFieldFun :: [Name] -> Type -> Q Exp
-toFieldFun ns t@(ConT n)   | n `elem` ns = [| unI0 . unI |]
-toFieldFun ns t@(AppT f a)               = [| fmap $(toFieldFun ns a) . unD |]
-toFieldFun ns t                          = [| unK |]
+toFieldFun ns t@(ConT n)
+  | remakeName n `elem` ns = [| unI0 . unI |]
+toFieldFun ns t@(AppT f a) = [| fmap $(toFieldFun ns a) . unD |]
+toFieldFun ns t            = [| unK |]
 
 field :: Int -> Name
 field n = mkName $ "f" ++ show n
@@ -297,3 +338,6 @@ lrE 1 0 e = e
 lrE m 0 e = conE 'L `appE` e
 lrE m i e = conE 'R `appE` lrE (m-1) (i-1) e
 
+-- Should we, under certain circumstances, maintain the module name?
+remakeName :: Name -> Name
+remakeName n = mkName (nameBase n)
