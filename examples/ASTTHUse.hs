@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE FlexibleInstances     #-}
 
 module ASTTHUse where
 
@@ -22,12 +23,5 @@ data AST :: * -> * where
   Decl  ::  AST Decl
   Var   ::  AST Var
 
--- ** Constructors
-
-$(deriveConstructors [''Expr, ''Decl, ''Var])
-
--- ** Functor encoding and 'Ix' instances
-
-$(deriveSystem ''AST [''Expr, ''Decl, ''Var] "PFAST")
-type instance PF AST = PFAST
+$(deriveAll ''AST)
 
