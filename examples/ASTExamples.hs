@@ -10,9 +10,9 @@ import Control.Monad ((>=>))
 
 -- Replace ASTUse with ASTTHUse below if you want
 -- to test TH code generation.
-import AST
 import ASTUse
 -- import ASTTHUse
+import AST
 
 import Generics.MultiRec.Base
 import Generics.MultiRec.Compos
@@ -58,8 +58,8 @@ infixr 5 &.
 (&.) = (F.&)
 
 evalAlgebra1 :: F.Algebra AST Value
-evalAlgebra1 _ =  
- 
+evalAlgebra1 _ =
+
       tag  (   con (\ (K x)                   -> EV (const x))
            &.  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  +  y env))
            &.  con (\ (I (EV x) :*: I (EV y)) -> EV (\ env -> x env  *  y env))
@@ -102,12 +102,12 @@ eval2 x = let (EV f) = FA.fold evalAlgebra2 Expr x in f
 -- | Test for 'eval1'
 
 testEval1 :: Int
-testEval1 = eval1 example [("y", -12)] 
+testEval1 = eval1 example [("y", -12)]
 
 -- | Test for 'eval2'
 
 testEval2 :: Int
-testEval2 = eval2 example [("y", -12)] 
+testEval2 = eval2 example [("y", -12)]
 
 -- | Equality instance for 'Expr'
 
