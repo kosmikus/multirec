@@ -3,7 +3,6 @@
 {-# LANGUAGE TypeOperators    #-}
 {-# LANGUAGE KindSignatures   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE PatternSignatures #-}
 
 -----------------------------------------------------------------------------
 -- |
