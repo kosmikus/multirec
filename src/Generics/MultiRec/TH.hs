@@ -41,6 +41,7 @@ deriveAll :: Name -> Q [Dec]
 deriveAll n =
   do
     info <- reify n
+    -- runIO $ putStrLn $ show info
     let ns = map remakeName (extractConstructorNames info)
     cs  <- deriveConstructors ns
     pf  <- derivePFInstance n ns
