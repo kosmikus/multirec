@@ -32,7 +32,6 @@ module Generics.MultiRec.TH
 
 import Generics.MultiRec.Base
 import Language.Haskell.TH hiding (Fixity())
-import Language.Haskell.TH.Syntax (Lift(..))
 import Control.Applicative
 import Control.Monad
 
@@ -86,7 +85,7 @@ deriveSystem = deriveFamily
 
 derivePF :: String -> [Name] -> Q [Dec]
 derivePF pfn ns =
-    fmap (:[]) $
+    return <$>
     tySynD (mkName pfn) [] (foldr1 sum (map (pfType ns) ns))
   where
     sum :: Q Type -> Q Type -> Q Type
@@ -115,7 +114,7 @@ deriveFam s ns =
   do
     fcs <- liftM concat $ zipWithM (mkFrom ns (length ns)) [0..] ns
     tcs <- liftM concat $ zipWithM (mkTo   ns (length ns)) [0..] ns
-    liftM (:[]) $
+    return <$>
       instanceD (cxt []) (conT ''Fam `appT` conT s)
         [funD 'from fcs, funD 'to tcs]
 
@@ -124,7 +123,7 @@ deriveFam s ns =
 
 deriveEqS :: Name -> [Name] -> Q [Dec]
 deriveEqS s ns =
-    liftM (:[]) $
+    return <$>
     instanceD (cxt []) (conT ''EqS `appT` conT s)
       [funD 'eqS (trues ++ falses)]
   where
@@ -168,15 +167,17 @@ mkData r@(RecC _ _) =
   mkData (stripRecordNames r)
 mkData (InfixC t1 n t2) =
   mkData (NormalC n [t1,t2])
+mkData (ForallC _ _ c) =
+  mkData c
 
-instance Lift Fixity where
-  lift Prefix      = conE 'Prefix
-  lift (Infix a n) = conE 'Infix `appE` [| a |] `appE` [| n |]
+fixity :: Fixity -> ExpQ
+fixity Prefix      = conE 'Prefix
+fixity (Infix a n) = conE 'Infix `appE` assoc a `appE` [| n |]
 
-instance Lift Associativity where
-  lift LeftAssociative  = conE 'LeftAssociative
-  lift RightAssociative = conE 'RightAssociative
-  lift NotAssociative   = conE 'NotAssociative
+assoc :: Associativity -> ExpQ
+assoc LeftAssociative  = conE 'LeftAssociative
+assoc RightAssociative = conE 'RightAssociative
+assoc NotAssociative   = conE 'NotAssociative
 
 mkInstance :: Con -> Q Dec
 mkInstance (NormalC n _) =
@@ -184,6 +185,8 @@ mkInstance (NormalC n _) =
       [funD 'conName [clause [wildP] (normalB (stringE (nameBase n))) []]]
 mkInstance r@(RecC _ _) =
   mkInstance (stripRecordNames r)
+mkInstance (ForallC _ _ c) =
+  mkInstance c
 mkInstance (InfixC t1 n t2) =
     do
       i <- reify n
@@ -192,7 +195,7 @@ mkInstance (InfixC t1 n t2) =
                  _ -> Prefix
       instanceD (cxt []) (appT (conT ''Constructor) (conT $ remakeName n))
         [funD 'conName   [clause [wildP] (normalB (stringE (nameBase n))) []],
-         funD 'conFixity [clause [wildP] (normalB [| fi |]) []]]
+         funD 'conFixity [clause [wildP] (normalB (fixity fi)) []]]
   where
     convertFixity (Fixity n d) = Infix (convertDirection d) n
     convertDirection InfixL = LeftAssociative
@@ -227,6 +230,8 @@ pfCon ns r@(RecC _ _) =
   pfCon ns (stripRecordNames r)
 pfCon ns (InfixC t1 n t2) =
     pfCon ns (NormalC n [t1,t2])
+pfCon ns (ForallC _ _ c) =
+    pfCon ns c
 
 pfField :: [Name] -> Type -> Q Type
 pfField ns t@(ConT n)
@@ -289,6 +294,8 @@ fromCon wrap ns n m i r@(RecC _ _) =
   fromCon wrap ns n m i (stripRecordNames r)
 fromCon wrap ns n m i (InfixC t1 cn t2) =
   fromCon wrap ns n m i (NormalC cn [t1,t2])
+fromCon wrap ns n m i (ForallC _ _ c) =
+  fromCon wrap ns n m i c
 
 toCon :: (Q Pat -> Q Pat) -> [Name] -> Name -> Int -> Int -> Con -> Q Clause
 toCon wrap ns n m i (NormalC cn []) =
@@ -306,6 +313,8 @@ toCon wrap ns n m i r@(RecC _ _) =
   toCon wrap ns n m i (stripRecordNames r)
 toCon wrap ns n m i (InfixC t1 cn t2) =
   toCon wrap ns n m i (NormalC cn [t1,t2])
+toCon wrap ns n m i (ForallC _ _ c) =
+  toCon wrap ns n m i c
 
 fromField :: [Name] -> Int -> Type -> Q Exp
 fromField ns nr t = [| $(fromFieldFun ns t) $(varE (field nr)) |]
