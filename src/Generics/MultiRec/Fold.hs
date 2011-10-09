@@ -22,7 +22,7 @@
 -- There are several variants of fold in other modules that are probably
 -- easier to use:
 --
---   * for folds with constant return type, look at 
+--   * for folds with constant return type, look at
 --     "Generics.MultiRec.FoldAlgK" (or "Generics.MultiRec.FoldK"),
 --
 --   * for folds with convenient algebras, look at
@@ -36,7 +36,6 @@ import Generics.MultiRec.Base
 import Generics.MultiRec.HFunctor
 
 import Control.Monad hiding (foldM)
-import Control.Applicative
 
 -- * Generic fold and unfold
 

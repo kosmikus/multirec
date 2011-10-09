@@ -26,8 +26,7 @@ import Generics.MultiRec.Base
 
 import Control.Monad
 import Data.Char
-import Data.Traversable
-import Text.ParserCombinators.ReadP (char, skipSpaces, sepBy)
+import Text.ParserCombinators.ReadP (sepBy)
 import Text.Read hiding (readsPrec, readPrec)
 import Prelude hiding (readsPrec)
 import qualified Prelude as P (readsPrec)
