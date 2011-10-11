@@ -36,11 +36,11 @@ import Control.Applicative
 import Control.Monad
 
 -- | Given the name of the family index GADT, derive everything.
-
 deriveAll :: Name -> Q [Dec]
 deriveAll n =
   do
     info <- reify n
+    -- runIO (print info)
     let ns = map remakeName (extractConstructorNames info)
     cs  <- deriveConstructors ns
     pf  <- derivePFInstance n ns
@@ -52,7 +52,6 @@ deriveAll n =
 -- | Given a list of datatype names, derive datatypes and
 -- instances of class 'Constructor'. Not needed if 'deriveAll'
 -- is used.
-
 deriveConstructors :: [Name] -> Q [Dec]
 deriveConstructors =
   liftM concat . mapM constrInstance
@@ -82,7 +81,6 @@ deriveSystem = deriveFamily
 
 -- | Derive only the 'PF' instance. Not needed if 'deriveAll'
 -- is used.
-
 derivePF :: String -> [Name] -> Q [Dec]
 derivePF pfn ns =
     return <$>
@@ -101,14 +99,12 @@ derivePFInstance n ns =
 
 -- | Derive only the 'El' instances. Not needed if 'deriveAll'
 -- is used.
-
 deriveEl :: Name -> [Name] -> Q [Dec]
 deriveEl s ns =
   mapM (elInstance s) ns
 
 -- | Derive only the 'Fam' instance. Not needed if 'deriveAll'
 -- is used.
-
 deriveFam :: Name -> [Name] -> Q [Dec]
 deriveFam s ns =
   do
@@ -120,7 +116,6 @@ deriveFam s ns =
 
 -- | Derive only the 'EqS' instance. Not needed if 'deriveAll'
 -- is used.
-
 deriveEqS :: Name -> [Name] -> Q [Dec]
 deriveEqS s ns =
     return <$>
@@ -132,6 +127,9 @@ deriveEqS s ns =
     trues        = map trueClause ns
     falses       = if length trues == 1 then [] else [falseClause]
 
+-- | Process the reified info of the index GADT, and extract
+-- its constructor names, which are also the names of the datatypes
+-- that are part of the family.
 extractConstructorNames :: Info -> [Name]
 extractConstructorNames (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom cs
   where
@@ -143,6 +141,17 @@ extractConstructorNames (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom cs
     extractFrom _               = []
 extractConstructorNames _                           = []
 
+-- | Turn a record-constructor into a normal constructor by just
+-- removing all the field names.
+stripRecordNames :: Con -> Con
+stripRecordNames (RecC n f) =
+  NormalC n (map (\(_, s, t) -> (s, t)) f)
+stripRecordNames c = c
+
+-- | Takes the name of a datatype (element of the family).
+-- By reifying the datatype, we obtain its constructors.
+-- For each constructor, we then generate a constructor-specific
+-- datatype, and an instance of the 'Constructor' class.
 constrInstance :: Name -> Q [Dec]
 constrInstance n =
   do
@@ -155,11 +164,8 @@ constrInstance n =
     is <- mapM mkInstance cs
     return $ ds ++ is
 
-stripRecordNames :: Con -> Con
-stripRecordNames (RecC n f) =
-  NormalC n (map (\(_, s, t) -> (s, t)) f)
-stripRecordNames c = c
-
+-- | Given a constructor, create an empty datatype of
+-- the same name.
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
   dataD (cxt []) (remakeName n) [] [] []
@@ -179,6 +185,8 @@ assoc LeftAssociative  = conE 'LeftAssociative
 assoc RightAssociative = conE 'RightAssociative
 assoc NotAssociative   = conE 'NotAssociative
 
+-- | Given a constructor, create an instance of the 'Constructor'
+-- class for the datatype associated with the constructor.
 mkInstance :: Con -> Q Dec
 mkInstance (NormalC n _) =
     instanceD (cxt []) (appT (conT ''Constructor) (conT $ remakeName n))
@@ -202,14 +210,19 @@ mkInstance (InfixC t1 n t2) =
     convertDirection InfixR = RightAssociative
     convertDirection InfixN = NotAssociative
 
+-- | Takes all the names of datatypes belonging to the family, and
+-- a particular of these names. Produces the right hand side of the 'PF'
+-- type family instance for this family.
 pfType :: [Name] -> Name -> Q Type
 pfType ns n =
     do
       -- runIO $ putStrLn $ "processing " ++ show n
       i <- reify n
       let b = case i of
+                -- datatypes are nested binary sums of their constructors
                 TyConI (DataD _ _ _ cs _) ->
                   foldr1 sum (map (pfCon ns) cs)
+                -- type synonyms are always treated as constants
                 TyConI (TySynD t _ _) ->
                   conT ''K `appT` conT t
                 _ -> error "unknown construct"
@@ -218,21 +231,35 @@ pfType ns n =
     sum :: Q Type -> Q Type -> Q Type
     sum a b = conT ''(:+:) `appT` a `appT` b
 
+-- | Takes all the names of datatypes belonging to the family, and
+-- a particular name of a constructor of one of the datatypes. Creates
+-- the product structure for this constructor.
 pfCon :: [Name] -> Con -> Q Type
-pfCon ns (NormalC n []) =
-    appT (appT (conT ''C) (conT $ remakeName n)) (conT ''U)
-pfCon ns (NormalC n fs) =
-    appT (appT (conT ''C) (conT $ remakeName n)) (foldr1 prod (map (pfField ns . snd) fs))
-  where
-    prod :: Q Type -> Q Type -> Q Type
-    prod a b = conT ''(:*:) `appT` a `appT` b
 pfCon ns r@(RecC _ _) =
   pfCon ns (stripRecordNames r)
 pfCon ns (InfixC t1 n t2) =
     pfCon ns (NormalC n [t1,t2])
 pfCon ns (ForallC _ _ c) =
     pfCon ns c
+pfCon ns (NormalC n []) =
+    -- a constructor without arguments is represented using 'U'
+    appT (appT (conT ''C) (conT $ remakeName n)) (conT ''U)
+pfCon ns (NormalC n fs) =
+    -- a constructor with arguments is a nested binary product
+    appT (appT (conT ''C) (conT $ remakeName n))
+         (foldr1 prod (map (pfField ns . snd) fs))
+  where
+    prod :: Q Type -> Q Type -> Q Type
+    prod a b = conT ''(:*:) `appT` a `appT` b
 
+-- | Takes all the names of datatypes belonging to the family, and
+-- a particular type (that occurs as a field in one of these
+-- datatypes). Produces the structure for this type. We have to
+-- distinguish between recursive calls, compositions, and constants.
+--
+-- TODO: We currently treat all applications as compositions. However,
+-- we can argue that applications should be treated as compositions only
+-- if the entire construct cannot be treated as a constant.
 pfField :: [Name] -> Type -> Q Type
 pfField ns t@(ConT n)
   | remakeName n `elem` ns          = conT ''I `appT` return t
