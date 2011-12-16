@@ -116,7 +116,7 @@ instance Functor (K0 a) where
 -- * Indexed families
 
 -- | Type family describing the pattern functor of a family.
-type family PF phi :: (* -> *) -> * -> *
+type family PF (phi :: * -> *) :: (* -> *) -> * -> *
 
 -- | Class for the members of a family.
 class El phi ix where
