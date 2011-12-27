@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GADTs           #-}
 {-# LANGUAGE KindSignatures  #-}
+{-# LANGUAGE PatternGuards   #-}
 
 -----------------------------------------------------------------------------
 -- |
