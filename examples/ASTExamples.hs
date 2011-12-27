@@ -10,7 +10,7 @@ import Control.Monad ((>=>))
 
 -- Replace ASTUse with ASTTHUse below if you want
 -- to test TH code generation.
--- import ASTUse
+import qualified ASTUse
 import ASTTHUse
 import AST
 

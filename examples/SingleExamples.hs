@@ -7,8 +7,8 @@ import Generics.MultiRec.FoldAlgK
 
 -- Replace SingleUse with SingleTHUse below if you want
 -- to test TH code generation.
-import SingleUse
--- import SingleTHUse
+import qualified SingleUse
+import SingleTHUse
 import Single
 
 -- | evalLogic takes a function that gives a logic values to variables,
