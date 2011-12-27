@@ -18,10 +18,10 @@ import AST
 
 -- ** Index type
 
-data AST :: * -> * where
-  Expr  ::  AST Expr
-  Decl  ::  AST Decl
-  Var   ::  AST Var
+data AST :: * -> * -> * where
+  Expr  ::  AST a (Expr a)
+  Decl  ::  AST a (Decl a)
+  Var   ::  AST a (Var  a)
 
 $(deriveAll ''AST)
 

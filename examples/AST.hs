@@ -14,17 +14,17 @@ import Generics.MultiRec.Base
 
 infix 1 :=
 
-data Expr   =  Const  Int
-            |  Add    Expr  Expr
-            |  Mul    Expr  Expr
-            |  EVar   Var
-            |  Let    Decl  Expr
+data Expr a =  Const  Int
+            |  Add    (Expr a)  (Expr a)
+            |  Mul    (Expr a)  (Expr a)
+            |  EVar   (Var a)
+            |  Let    (Decl a)  (Expr a)
   deriving Show
 
-data Decl   =  Var := Expr
-            |  Seq    [Decl]
+data Decl a =  Var a := Expr a
+            |  Seq    [Decl a]
             |  None
   deriving Show
 
-type Var   =  String
+type Var a  =  a
 

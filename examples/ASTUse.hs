@@ -16,10 +16,10 @@ import AST
 
 -- ** Index type
 
-data AST :: * -> * where
-  Expr  ::  AST Expr
-  Decl  ::  AST Decl
-  Var   ::  AST Var
+data AST :: * -> * -> * where
+  Expr  ::  AST a (Expr a)
+  Decl  ::  AST a (Decl a)
+  Var   ::  AST a (Var  a)
 
 -- ** Constructors
 
@@ -51,29 +51,29 @@ instance Constructor None  where conName _ = "None"
 -- the overall structure slightly simpler, but makes the nesting
 -- of 'L' and 'R' constructors larger in turn.
 
-type instance PF AST  =    
+type instance PF (AST a)  =
       (     C Const   (K Int)
-       :+:  C Add     (I Expr :*: I Expr)
-       :+:  C Mul     (I Expr :*: I Expr)
-       :+:  C EVar    (I Var)
-       :+:  C Let     (I Decl :*: I Expr)
-      ) :>: Expr
-  :+: (     C Assign  (I Var  :*: I Expr)
-       :+:  C Seq     ([] :.: I Decl)
+       :+:  C Add     (I (Expr a) :*: I (Expr a))
+       :+:  C Mul     (I (Expr a) :*: I (Expr a))
+       :+:  C EVar    (I (Var a))
+       :+:  C Let     (I (Decl a) :*: I (Expr a))
+      ) :>: Expr a
+  :+: (     C Assign  (I (Var a)  :*: I (Expr a))
+       :+:  C Seq     ([] :.: I (Decl a))
        :+:  C None    U
-      ) :>: Decl
-  :+: (               (K String)
-      ) :>: Var
+      ) :>: Decl a
+  :+: (               (K a)
+      ) :>: Var a
 
 -- ** 'El' instances
 
-instance El AST Expr where proof = Expr
-instance El AST Decl where proof = Decl
-instance El AST Var  where proof = Var
+instance El (AST a) (Expr a) where proof = Expr
+instance El (AST a) (Decl a) where proof = Decl
+instance El (AST a) (Var a)  where proof = Var
 
 -- ** 'Fam' instance
 
-instance Fam AST where
+instance Fam (AST a) where
 
   from Expr (Const i)  =  L (Tag (L          (C (K i))))
   from Expr (Add e f)  =  L (Tag (R (L       (C (I (I0 e) :*: I (I0 f))))))
@@ -101,7 +101,7 @@ instance Fam AST where
 
 -- ** EqS instance
 
-instance EqS AST where
+instance EqS (AST a) where
   eqS Expr Expr = Just Refl
   eqS Decl Decl = Just Refl
   eqS Var  Var  = Just Refl

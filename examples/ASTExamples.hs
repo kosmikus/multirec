@@ -10,8 +10,8 @@ import Control.Monad ((>=>))
 
 -- Replace ASTUse with ASTTHUse below if you want
 -- to test TH code generation.
-import ASTUse
--- import ASTTHUse
+-- import ASTUse
+import ASTTHUse
 import AST
 
 import Generics.MultiRec.Base
@@ -30,26 +30,26 @@ example = Let (Seq ["x" := Mul (Const 6) (Const 9), "z" := Const 1])
 
 -- | Renaming variables using 'compos'
 
-renameVar :: Expr -> Expr
+renameVar :: Expr String -> Expr String
 renameVar = renameVar' Expr
   where
-    renameVar' :: AST a -> a -> a
+    renameVar' :: AST String a -> a -> a
     renameVar' Var x = x ++ "_"
     renameVar' p   x = compos renameVar' p x
 
 -- | Test for 'renameVar'
 
-testRename :: Expr
+testRename :: Expr String
 testRename = renameVar example
 
 -- | Result of evaluating an expression
 
 data family Value aT :: *
-data instance Value Expr  =  EV  (Env -> Int)
-data instance Value Decl  =  DV  (Env -> Env)
-data instance Value Var   =  VV  Var
+data instance Value (Expr String)  =  EV  (Env -> Int)
+data instance Value (Decl String)  =  DV  (Env -> Env)
+data instance Value (Var String)   =  VV  (Var String)
 
-type Env = [(Var, Int)]
+type Env = [(Var String, Int)]
 
 -- | Algebra for evaluating an expression
 
@@ -57,7 +57,7 @@ infixr 5 &.
 
 (&.) = (F.&)
 
-evalAlgebra1 :: F.Algebra AST Value
+evalAlgebra1 :: F.Algebra (AST String) Value
 evalAlgebra1 _ =
 
       tag  (   con (\ (K x)                   -> EV (const x))
@@ -74,7 +74,7 @@ evalAlgebra1 _ =
 
 -- | More convenient algebra for evaluating an expression
 
-evalAlgebra2 :: FA.Algebra AST Value
+evalAlgebra2 :: FA.Algebra (AST String) Value
 evalAlgebra2 _ =
 
      (  (\ x             -> EV (const x))
@@ -91,12 +91,12 @@ evalAlgebra2 _ =
 
 -- | Evaluator
 
-eval1 :: Expr -> Env -> Int
+eval1 :: Expr String -> Env -> Int
 eval1 x = let (EV f) = F.fold evalAlgebra1 Expr x in f
 
 -- | Evaluator
 
-eval2 :: Expr -> Env -> Int
+eval2 :: Expr String -> Env -> Int
 eval2 x = let (EV f) = FA.fold evalAlgebra2 Expr x in f
 
 -- | Test for 'eval1'
@@ -111,7 +111,7 @@ testEval2 = eval2 example [("y", -12)]
 
 -- | Equality instance for 'Expr'
 
-instance Eq Expr where
+instance Eq a => Eq (Expr a) where
   (==) = eq Expr
 
 -- | Test for equality
