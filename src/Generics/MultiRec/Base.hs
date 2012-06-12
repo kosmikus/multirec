@@ -76,7 +76,7 @@ data (f :*: g) (r :: * -> *) ix = f r ix :*: g r ix
 
 -- | Is used to indicate the type that a
 -- particular constructor injects to.
-data f :>: ix :: (* -> *) -> * -> * where
+data (f :>: ix) (r :: * -> *) ix' where
   Tag :: f r ix -> (f :>: ix) r ix
 
 -- | Destructor for '(:>:)'.
