@@ -36,6 +36,7 @@ import Generics.MultiRec.Base
 import Language.Haskell.TH hiding (Fixity())
 import Control.Applicative
 import Control.Monad
+import Data.Foldable (foldrM);
 
 -- | Given the name of the family index GADT, derive everything.
 deriveAll :: Name -> Q [Dec]
@@ -303,7 +304,9 @@ pfField ns ps t
     rename (VarT n)
       | Just p <- lookup n ps          = varT p
     rename t                           = return t
-pfField ns ps t@(AppT f a)             = conT ''(:.:) `appT` return f `appT` pfField ns ps a
+pfField ns ps t@(AppT f a)
+  | TupleT n : ts <- unApp t           = foldrM (\ s t -> conT ''(:*:) `appT` pfField ns ps s `appT` return t) (ConT ''U) ts
+  | otherwise                          = conT ''(:.:) `appT` return f `appT` pfField ns ps a
 pfField ns ps t@(VarT n)
   | Just p <- lookup n ps              = {- runIO (print (ps, n)) >> -} conT ''K `appT` varT p
 pfField ns ps t                        = conT ''K `appT` return t
@@ -400,7 +403,11 @@ fromFieldFun ns t@(ConT n)
 fromFieldFun ns t
   | ConT n : a <- unApp t, remakeName n `elem` ns
                              = [| I . I0 |]
-fromFieldFun ns t@(AppT f a) = [| D . fmap $(fromFieldFun ns a) |]
+fromFieldFun ns t@(AppT f a)
+  | TupleT n : ts <- unApp t = mapM (newName . ("x" ++) . show) [1..n] >>= \ vs ->
+                               lam1E (tupP (varP <$> vs)) $
+                               foldrM (\ (v, t) x -> conE '(:*:) `appE` (fromFieldFun ns t `appE` varE v) `appE` return x) (ConE 'U) (zip vs ts)
+  | otherwise                = [| D . fmap $(fromFieldFun ns a) |]
 fromFieldFun ns t            = [| K |]
 
 toField :: [Name] -> Int -> Type -> Q Exp
@@ -408,12 +415,16 @@ toField ns nr t = [| $(toFieldFun ns t) $(varE (field nr)) |]
 
 toFieldFun :: [Name] -> Type -> Q Exp
 toFieldFun ns t@(ConT n)
-  | remakeName n `elem` ns = [| unI0 . unI |]
+  | remakeName n `elem` ns   = [| unI0 . unI |]
 toFieldFun ns t
   | ConT n : a <- unApp t, remakeName n `elem` ns
-                           = [| unI0 . unI |]
-toFieldFun ns t@(AppT f a) = [| fmap $(toFieldFun ns a) . unD |]
-toFieldFun ns t            = [| unK |]
+                             = [| unI0 . unI |]
+toFieldFun ns t@(AppT f a)
+  | TupleT n : ts <- unApp t = mapM (newName . ("x" ++) . show) [1..n] >>= \ vs ->
+                               lam1E (foldr (\ v p -> conP '(:*:) [varP v, p]) (conP 'U []) vs) $
+                               tupE (zipWith (\ v t -> toFieldFun ns t `appE` varE v) vs ts)
+  | otherwise                = [| fmap $(toFieldFun ns a) . unD |]
+toFieldFun ns t              = [| unK |]
 
 field :: Int -> Name
 field n = mkName $ "f" ++ show n
