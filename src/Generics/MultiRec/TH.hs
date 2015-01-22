@@ -151,7 +151,12 @@ extractConstructorNames ps (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom c
     extractFrom _                 = []
 
     extractEq :: Pred -> [Name]
-    extractEq (EqualP t1 t2) = filter (\ p -> p `elem` ps) (extractArgs t1 ++ extractArgs t2)
+#if __GLASGOW_HASKELL__ > 708
+    extractEq (EqualityT `AppT` t1 `AppT` t2) =
+#else
+    extractEq (EqualP t1 t2) =
+#endif
+      filter (\ p -> p `elem` ps) (extractArgs t1 ++ extractArgs t2)
     extractEq _              = []
 
     extractArgs :: Type -> [Name]
