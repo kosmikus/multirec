@@ -38,7 +38,7 @@ description:
 stability:            experimental
 build-type:           Simple
 cabal-version:        >= 1.6
-tested-with:          GHC == 7.0.4
+tested-with:          GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.1
 extra-source-files:   examples/All.hs
                       examples/AST.hs
                       examples/ASTUse.hs
