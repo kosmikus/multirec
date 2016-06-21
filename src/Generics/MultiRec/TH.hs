@@ -141,7 +141,11 @@ deriveEqS s ps ns =
 -- its constructor names, which are also the names of the datatypes
 -- that are part of the family.
 extractConstructorNames :: [Name] -> Info -> [(Name, [Name])]
+#if MIN_VERSION_template_haskell(2,11,0)
+extractConstructorNames ps (TyConI (DataD _ _ _ _ cs _)) = concatMap extractFrom cs
+#else
 extractConstructorNames ps (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom cs
+#endif
   where
     extractFrom :: Con -> [(Name, [Name])]
     extractFrom (ForallC _ eqs c) = map (\ (n, _) -> (n, concatMap extractEq eqs)) (extractFrom c)
@@ -170,7 +174,11 @@ extractConstructorNames _  _                           = []
 -- | Process the reified info of the index GADT, and extract
 -- its type parameters.
 extractParameters :: Info -> [Name]
+#if MIN_VERSION_template_haskell(2,11,0)
+extractParameters (TyConI (DataD _ _ ns _ _ _)) = concatMap extractFromBndr ns
+#else
 extractParameters (TyConI (DataD _ _ ns _ _)) = concatMap extractFromBndr ns
+#endif
 extractParameters (TyConI (TySynD _ ns _))    = concatMap extractFromBndr ns
 extractParameters _                           = []
 
@@ -195,7 +203,11 @@ constrInstance n =
     i <- reify n
     -- runIO (print i)
     let cs = case i of
+#if MIN_VERSION_template_haskell(2,11,0)
+               TyConI (DataD _ _ _ _ cs _) -> cs
+#else
                TyConI (DataD _ _ _ cs _) -> cs
+#endif
                _ -> []
     ds <- mapM mkData cs
     is <- mapM mkInstance cs
@@ -205,7 +217,11 @@ constrInstance n =
 -- the same name.
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
+#if MIN_VERSION_template_haskell(2,11,0)
+  dataD (cxt []) (remakeName n) [] Nothing [] (cxt [])
+#else
   dataD (cxt []) (remakeName n) [] [] []
+#endif
 mkData r@(RecC _ _) =
   mkData (stripRecordNames r)
 mkData (InfixC t1 n t2) =
@@ -234,10 +250,17 @@ mkInstance (ForallC _ _ c) =
   mkInstance c
 mkInstance (InfixC t1 n t2) =
     do
+#if MIN_VERSION_template_haskell(2,11,0)
+      i <- reifyFixity n
+      let fi = case i of
+                 Just f  -> convertFixity f
+                 Nothing -> Prefix
+#else
       i <- reify n
       let fi = case i of
                  DataConI _ _ _ f -> convertFixity f
                  _ -> Prefix
+#endif
       instanceD (cxt []) (appT (conT ''Constructor) (conT $ remakeName n))
         [funD 'conName   [clause [wildP] (normalB (stringE (nameBase n))) []],
          funD 'conFixity [clause [wildP] (normalB (fixity fi)) []]]
@@ -258,7 +281,11 @@ pfType ns ps (n, rs) =
       -- runIO $ putStrLn $ "processing " ++ show n
       let b = case i of
                 -- datatypes are nested binary sums of their constructors
+#if MIN_VERSION_template_haskell(2,11,0)
+                TyConI (DataD _ _ _ _ cs _) ->
+#else
                 TyConI (DataD _ _ _ cs _) ->
+#endif
                   foldr1 sum (map (pfCon ns (zip qs rs)) cs)
                 -- type synonyms are always treated as constants
                 TyConI (TySynD t _ _) ->
@@ -332,7 +359,11 @@ mkFrom ns m i n =
       i <- reify n
       let dn = remakeName n
       let b = case i of
+#if MIN_VERSION_template_haskell(2,11,0)
+                TyConI (DataD _ _ _ _ cs _) ->
+#else
                 TyConI (DataD _ _ _ cs _) ->
+#endif
                   zipWith (fromCon wrapE ns dn (length cs)) [0..] cs
                 TyConI (TySynD t _ _) ->
                   [clause [conP dn [], varP (field 0)] (normalB (wrapE $ conE 'K `appE` varE (field 0))) []]
@@ -347,7 +378,11 @@ mkTo ns m i n =
       i <- reify n
       let dn = remakeName n
       let b = case i of
+#if MIN_VERSION_template_haskell(2,11,0)
+                TyConI (DataD _ _ _ _ cs _) ->
+#else
                 TyConI (DataD _ _ _ cs _) ->
+#endif
                   zipWith (toCon wrapP ns dn (length cs)) [0..] cs
                 TyConI (TySynD t _ _) ->
                   [clause [conP dn [], wrapP $ conP 'K [varP (field 0)]] (normalB $ varE (field 0)) []]
