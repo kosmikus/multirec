@@ -1,3 +1,4 @@
+{-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE KindSignatures        #-}

@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE LiberalTypeSynonyms  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE GADTs                #-}
 
