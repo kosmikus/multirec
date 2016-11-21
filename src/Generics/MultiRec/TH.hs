@@ -36,6 +36,7 @@ import Generics.MultiRec.Base
 import Language.Haskell.TH hiding (Fixity())
 import Control.Applicative
 import Control.Monad
+import Data.Maybe (fromJust)
 
 -- | Given the name of the family index GADT, derive everything.
 deriveAll :: Name -> Q [Dec]
@@ -44,6 +45,8 @@ deriveAll n =
     info <- reify n
     -- runIO (print info)
     let ps  = init (extractParameters info)
+    -- runIO (print $ ps)
+    -- runIO (print $ extractConstructorNames ps info)
     let nps = map (\ (n, ps) -> (remakeName n, ps)) (extractConstructorNames ps info)
     let ns  = map fst nps
     -- runIO (print nps)
@@ -148,10 +151,13 @@ extractConstructorNames ps (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom c
 #endif
   where
     extractFrom :: Con -> [(Name, [Name])]
-    extractFrom (ForallC _ eqs c) = map (\ (n, _) -> (n, concatMap extractEq eqs)) (extractFrom c)
+    extractFrom (ForallC _ eqs c) = map (\ (n, ps) -> (n, ps ++ concatMap extractEq eqs)) (extractFrom c)
     extractFrom (InfixC _ n _)    = [(n, [])]
     extractFrom (RecC n _)        = [(n, [])]
     extractFrom (NormalC n [])    = [(n, [])]
+#if MIN_VERSION_template_haskell(2,11,0)
+    extractFrom (GadtC ns _ t)    = map (\ n -> (n, extractType t)) ns
+#endif
     extractFrom _                 = []
 
     extractEq :: Pred -> [Name]
@@ -167,6 +173,22 @@ extractConstructorNames ps (TyConI (DataD _ _ _ cs _)) = concatMap extractFrom c
     extractArgs (AppT x (VarT n)) = extractArgs x ++ [n]
     extractArgs (VarT n)          = [n]
     extractArgs _                 = []
+
+    extractType :: Type -> [Name]
+    extractType (AppT a1 a2) = combine (extractVars a1) (extractVars a2)
+      where
+        combine :: [Name] -> [Name] -> [Name]
+        combine vs1 vs2 =
+          let
+            table = zip vs1 ps
+          in
+            map (fromJust . flip lookup table) vs2
+    extractType _            = []
+
+    extractVars :: Type -> [Name]
+    extractVars (AppT t (VarT v)) = extractVars t ++ [v]
+    extractVars (AppT t _)        = extractVars t
+    extractVars _                 = []
 
 extractConstructorNames _  _                           = []
 
