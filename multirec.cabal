@@ -44,10 +44,13 @@ extra-source-files:   examples/All.hs
                       examples/ASTUse.hs
                       examples/ASTTHUse.hs
                       examples/ASTExamples.hs
+                      examples/J.hs
+                      examples/GRose.hs
                       examples/Single.hs
                       examples/SingleUse.hs
                       examples/SingleTHUse.hs
                       examples/SingleExamples.hs
+                      examples/VarTypes.hs
                       CREDITS
 
 source-repository head
