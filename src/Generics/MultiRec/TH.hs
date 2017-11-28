@@ -240,7 +240,9 @@ constrInstance n =
 -- the same name.
 mkData :: Con -> Q Dec
 mkData (NormalC n _) =
-#if MIN_VERSION_template_haskell(2,11,0)
+#if MIN_VERSION_template_haskell(2,12,0)
+  dataD (cxt []) (remakeName n) [] Nothing [] []
+#elif MIN_VERSION_template_haskell(2,11,0)
   dataD (cxt []) (remakeName n) [] Nothing [] (cxt [])
 #else
   dataD (cxt []) (remakeName n) [] [] []
