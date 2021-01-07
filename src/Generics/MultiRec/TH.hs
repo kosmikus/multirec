@@ -103,12 +103,14 @@ derivePFInstance n ps nps = return <$> myTySynInst
   where
     sum :: Q Type -> Q Type -> Q Type
     sum a b = conT ''(:+:) `appT` a `appT` b
-    tys = [foldl appT (conT n) (map varT ps)]
+    tys = foldl appT (conT n) (map varT ps)
     ty  = foldr1 sum (map (pfType (map fst nps) ps) nps)
-#if __GLASGOW_HASKELL__ > 706
-    myTySynInst = tySynInstD ''PF (tySynEqn tys ty)
+#if MIN_VERSION_template_haskell(2, 15, 0)
+    myTySynInst = tySynInstD (tySynEqn Nothing ([t|PF|] `appT` tys) ty)
+#elif __GLASGOW_HASKELL__ > 706
+    myTySynInst = tySynInstD ''PF (tySynEqn [tys] ty)
 #else
-    myTySynInst = tySynInstD ''PF tys ty
+    myTySynInst = tySynInstD ''PF [tys] ty
 #endif
 
 -- | Derive only the 'El' instances. Not needed if 'deriveAll'
