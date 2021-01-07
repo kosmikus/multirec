@@ -1,5 +1,5 @@
 name:                 multirec
-version:              0.7.9
+version:              0.7.10
 license:              BSD3
 license-file:         LICENSE
 author:               Alexey Rodriguez,
@@ -74,7 +74,7 @@ library
   default-language:   Haskell2010
 
   build-depends:      base >= 3.0 && < 5,
-                      template-haskell >= 2.4 && < 2.15
+                      template-haskell >= 2.4 && < 2.17
 
 test-suite examples
   type:               exitcode-stdio-1.0
